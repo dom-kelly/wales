@@ -1,0 +1,647 @@
+import React, { useState, useMemo } from 'react';
+import { MapPin, Clock, Car, Bed, Utensils, Camera, Phone, ExternalLink, Check, X, Navigation, ChevronDown, ChevronRight, Calendar, Users, PoundSterling, AlertCircle, Mountain, Waves, Trees, Castle, Zap, ShoppingCart } from 'lucide-react';
+import { useSharedState } from './api.js';
+
+const TRIP = {
+  title: "Wales 2026",
+  subtitle: "Eight nights · A family of four · A campervan",
+  dates: "1–9 August 2026",
+  party: "Dom + Mason (6) + Harper (10) + Mylo (16, tent)",
+  vehicle: "VW California Coast · ViewStalkers · 4 belts",
+  totalMiles: "~950",
+  totalDrivingHrs: "~24h"
+};
+
+const DAYS = [
+  {
+    num: 1, date: "Sat 1 Aug", weekday: "Saturday",
+    title: "Pickup & Conwy Valley",
+    blurb: "Drive south-west via Wales' tallest waterfall and a riverside dinner in Llangollen.",
+    drive: { miles: 180, hrs: "3h 30m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Erw+Glas+Maenan+LL26+0YP&waypoints=Pistyll+Rhaeadr+SY10+0BZ%7CThe+Corn+Mill+Llangollen+LL20+8PN&travelmode=driving",
+    stops: [
+      { time: "~10:00", type: "pickup", name: "Van pickup", loc: "Follifoot", notes: "£50 early-pickup fee to pay James via Goboony beforehand." },
+      { time: "~13:00", type: "food", name: "The Corn Mill", loc: "Llangollen", notes: "Riverside pub-restaurant in a converted 18th-century watermill above the River Dee. Book a terrace table for lunch — Saturday August gets rammed even at lunchtime.", link: "https://www.cornmill-llangollen.co.uk/", booking: "table" },
+      { time: "~15:30", type: "sight", name: "Pistyll Rhaeadr", loc: "Powys", notes: "Wales' tallest single-drop waterfall (240ft). £5 parking. Narrow lanes last 3 miles. Skip if you'd rather a calmer first day.", optional: true },
+      { time: "~17:30", type: "stay", name: "Erw Glas Glamping & Camping", loc: "Maenan · Night 1", notes: "Award-winning small family-run site directly off the A470 (no hill access), 4.8★. Pre-order a fresh takeaway pizza for tonight + breakfast hamper for the morning. On-site shop sells firewood, coal, drinks, ice-cream. Free-roaming chickens and friendly alpacas nearby — kids will love it.", phone: "01492 702486", link: "https://www.erwglasglampingandcamping.co.uk/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "Takeaway pizza at the van", loc: "Erw Glas", notes: "Fresh wood-fired pizza from the on-site Chill & Grill — pre-order when you book, collect from the site bar, eat back at the van." }
+    ]
+  },
+  {
+    num: 2, date: "Sun 2 Aug", weekday: "Sunday",
+    title: "Conwy + Fforest Coaster + Snowdonia",
+    blurb: "Castle in the morning, alpine coaster the whole family can ride, scenic drive through Ogwen Valley & Llanberis Pass.",
+    drive: { miles: 70, hrs: "2h 30m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Erw+Glas+Maenan+LL26+0YP&destination=Snowdon+Base+Camp+Rhyd-Ddu+LL54+7YS&waypoints=Conwy+Castle+LL32+8AY%7CZip+World+Betws-y-Coed+LL24+0HX%7CLlyn+Idwal+LL57%7CLone+Tree+Cafe+Llanberis+LL55+4EL%7CSPAR+Llanberis+LL55+4SU&travelmode=driving",
+    stops: [
+      { time: "~09:00", type: "depart", name: "Depart Erw Glas", loc: "Maenan", notes: "30 min drive to Conwy Castle." },
+      { time: "09:30", type: "sight", name: "Conwy Castle", loc: "Conwy", notes: "13th-century medieval fortress built by Edward I — UNESCO World Heritage Site. Plan ~90 minutes inside (8 towers to climb, Royal Apartments, Great Hall). Mostly outdoors and roofless — bring waterproofs. Car park (LL32 8AY) is right at the entrance but fills by 11am in August; long-stay parking near the quay is a 5-min walk if full. Cadw membership pays back with 3+ castles.", link: "https://cadw.gov.wales/visit/places-to-visit/conwy-castle" },
+      { time: "12:30", type: "activity", name: "Fforest Coaster", loc: "Zip World Betws-y-Coed", notes: "Alpine coaster everyone can ride (Mason on your lap from age 3, Harper & Mylo solo from 9+). Pre-book a slot.", link: "https://www.zipworld.co.uk/adventure/fforest-coaster", booking: "urgent" },
+      { time: "~13:45", type: "food", name: "Lunch at the Tipi Bar", loc: "Zip World Betws-y-Coed", notes: "On-site bar at the Zip World base — wood-fired pizzas, burgers, salads. Outdoor seating under canvas." },
+      { time: "15:30", type: "sight", name: "Llyn Idwal", loc: "Ogwen Valley", notes: "Glacial mountain lake with the dramatic Devil's Kitchen cleft as a backdrop — one of Snowdonia's most photographed spots. Short walk from Idwal Cottage car park to the shore. £3 parking. Car park fills early in August — have a plan B if full." },
+      { time: "16:45", type: "sight", name: "Lonely Tree, Llyn Padarn", loc: "Llanberis", notes: "A single windswept tree on a small rocky islet in Llyn Padarn lake — one of the most photographed scenes in Wales, with Snowdon behind. 5min walk from Lone Tree Cafe car park." },
+      { time: "~17:15", type: "shop", name: "Shop at SPAR Llanberis", loc: "Llanberis", notes: "Right on the high street as you pass through. Well-stocked for a village shop (locals rate it highly) — burgers, sausages, marshmallows, jacket potatoes, milk + bacon for breakfast. Stock up for the next 2 nights of BBQ at Snowdon Base Camp." },
+      { time: "~18:30", type: "stay", name: "Snowdon Base Camp", loc: "Rhyd-Ddu · Night 2", notes: "Owned by Cwellyn Arms pub but 0.5mi away. Check in at the pub then drive to the site. Only 3 campervan EHU bays — book one specifically. Buy kiln-dried logs at the pub on the way in (£7/bag, NO charcoal allowed).", phone: "01766 890321", link: "http://www.snowdoninn.co.uk/", booking: "pitch" },
+      { time: "~19:30", type: "food", name: "Fire-pit BBQ at the lake", loc: "Snowdon Base Camp", notes: "Cook over the kiln-dried logs in the site's fire-pit grills. Lakeside with Snowdon as backdrop — proper memory-maker for the kids." }
+    ]
+  },
+  {
+    num: 3, date: "Mon 3 Aug", weekday: "Monday",
+    title: "Anglesey loop",
+    blurb: "Day-trip from basecamp to Anglesey — Mars-like copper mine, sheltered cove lunch, dramatic lighthouse cliffs.",
+    drive: { miles: 130, hrs: "3h 00m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Snowdon+Base+Camp+Rhyd-Ddu+LL54+7YS&destination=Snowdon+Base+Camp+Rhyd-Ddu+LL54+7YS&waypoints=Mynydd+Parys+LL68+9RE%7CChurch+Bay+LL65%7CSouth+Stack+Lighthouse+LL65+1YH&travelmode=driving",
+    stops: [
+      { time: "~08:45", type: "depart", name: "Depart Snowdon Base Camp", loc: "Rhyd-Ddu", notes: "1h 15min drive to Parys Mountain — early start for a full Anglesey day." },
+      { time: "10:00", type: "sight", name: "Parys Mountain", loc: "Amlwch", notes: "Vast abandoned copper mine with vivid orange, red and yellow rock — feels like walking on Mars. Free parking, network of waymarked paths around the old workings, takes 1–2 hours to explore. Kids love it." },
+      { time: "12:30", type: "food", name: "Church Bay", loc: "Anglesey", notes: "Tiny tucked-away cove with a sandy beach and one famous pub — The Lobster Pot — known for fresh local seafood. Good lunch spot with a paddle for the kids if the tide's right." },
+      { time: "14:30", type: "sight", name: "South Stack Lighthouse", loc: "Holyhead", notes: "Working lighthouse on a tiny rocky island off Holy Island's western tip, reached by a steep staircase of 400 steps down the cliff. RSPB nature reserve at the top — puffins, guillemots and razorbills nest on the cliffs May–July." },
+      { time: "~18:30", type: "stay", name: "Snowdon Base Camp", loc: "Rhyd-Ddu · Night 3", notes: "Same base. Already have logs and BBQ supplies from yesterday." , booking: "pitch" },
+      { time: "~19:30", type: "food", name: "Fire-pit BBQ at the lake", loc: "Snowdon Base Camp", notes: "Final night on Llyn Cwellyn. Use remaining logs and BBQ supplies from yesterday's shop." }
+    ]
+  },
+  {
+    num: 4, date: "Tue 4 Aug", weekday: "Tuesday",
+    title: "Cregennen → Shell Island",
+    blurb: "Ice cream in Wales' prettiest village, picnic by twin mountain lakes, then onto the dunes for a tidal-causeway campsite.",
+    drive: { miles: 80, hrs: "2h 30m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Snowdon+Base+Camp+Rhyd-Ddu+LL54+7YS&destination=Shell+Island+LL45+2PJ&waypoints=Beddgelert+LL55+4YE%7CTesco+Porthmadog+LL49+9DB%7CLlynnau+Cregennen+LL39+1LJ&travelmode=driving",
+    stops: [
+      { time: "~09:20", type: "depart", name: "Depart Snowdon Base Camp", loc: "Rhyd-Ddu", notes: "10 min drive to Beddgelert." },
+      { time: "~09:30", type: "sight", name: "Beddgelert", loc: "Snowdonia", notes: "Stone-built village at the confluence of two rivers, surrounded by mountains — often called the prettiest village in Wales. Quick stop for Glaslyn Ices (iconic family-run ice-cream parlour) and a leg-stretch by the bridge." },
+      { time: "~10:30", type: "shop", name: "Shop at Tesco Porthmadog", loc: "Porthmadog", notes: "Big shop for the next 2 days: picnic lunch for today, BBQ supplies for tonight (Shell Island) and tomorrow night (Morfa Bychan), plus milk + bacon for breakfasts. Direct on the A487, ~25 min stop." },
+      { time: "~11:30", type: "food", name: "Picnic at Llynnau Cregennen", loc: "near Dolgellau", notes: "Two small mountain lakes high on the southern flank of Cadair Idris, with views across the Mawddach estuary to Barmouth. National Trust land, picnic benches by the water. Single-track gated road in — slow approach in the van." },
+      { time: "~15:00", type: "stay", name: "Shell Island", loc: "Llanbedr · Night 4", notes: "Vast 300-acre coastal campsite on a tidal peninsula — pitch anywhere you like in the dunes (no marked plots), miles of beach on the doorstep. Famous for shell-collecting at low tide. On-site supermarket for top-ups. The access causeway floods at high tide — CHECK TIDE TIMES.", phone: "01341 241453", link: "http://www.shellisland.co.uk/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "Raised charcoal BBQ in the dunes", loc: "Shell Island", notes: "Cook in the dunes overlooking the sea. BBQ must be raised 2ft off the grass — site rule, strictly enforced. Watch the sunset over Cardigan Bay." }
+    ]
+  },
+  {
+    num: 5, date: "Wed 5 Aug", weekday: "Wednesday",
+    title: "Harlech → Cambrian coast",
+    blurb: "Clifftop UNESCO castle, fish & chips at a Victorian seaside town, on to Aberystwyth.",
+    drive: { miles: 65, hrs: "2h 30m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Shell+Island+LL45+2PJ&destination=Morfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL&waypoints=Harlech+Castle+LL46+2YH%7CBarmouth+LL42+1NB&travelmode=driving",
+    stops: [
+      { time: "~09:45", type: "depart", name: "Depart Shell Island", loc: "Llanbedr", notes: "15 min drive to Harlech Castle — CHECK TIDE TIMES before crossing the causeway." },
+      { time: "~10:00", type: "sight", name: "Harlech Castle", loc: "Harlech", notes: "Dramatic 13th-century cliff-top fortress built by Edward I — UNESCO World Heritage Site, perched on a 200ft rock with views across Tremadog Bay to Snowdonia. The site of the longest siege in British history. ~45min visit.", link: "https://cadw.gov.wales/visit/places-to-visit/harlech-castle" },
+      { time: "~12:30", type: "food", name: "Fish & chips at Barmouth", loc: "Barmouth", notes: "Classic Welsh seaside town with a long sandy beach and a Victorian harbour. The Mermaid (high street) and Davy Jones' Locker (seafront) both serve traditional fish & chips. Eat on the prom watching the Mawddach estuary." },
+      { time: "~17:00", type: "stay", name: "Morfa Bychan Holiday Park", loc: "Aberystwyth · Night 5", notes: "Clifftop holiday park 3 miles south of Aberystwyth with sweeping Cardigan Bay views from the touring pitches. Direct path down to a pebble cove. 4.7★. On-site shop for essentials. The 2-mile access road is narrow — take it slow in the van.", phone: "01970 617254", link: "https://www.hillandale.co.uk/our-parks/morfa-bychan-holiday-park", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "Raised BBQ with sea views", loc: "Morfa Bychan", notes: "Cook from yesterday's Tesco Porthmadog shop. BBQ must be raised off the grass — no fire pits allowed here. Sunset over Cardigan Bay." }
+    ]
+  },
+  {
+    num: 6, date: "Thu 6 Aug", weekday: "Thursday",
+    title: "Cardigan Bay",
+    blurb: "Short hop south. Dolphin spotting at New Quay, then a cliff-top campsite above one of Wales' prettiest small beaches.",
+    drive: { miles: 40, hrs: "1h 30m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Morfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL&destination=Ty+Gwyn+Caravan+and+Camping+Park+SA43+1QH&waypoints=Costcutter+Aberaeron+SA46+0AS%7CNew+Quay+SA45&travelmode=driving",
+    stops: [
+      { time: "~09:10", type: "depart", name: "Depart Morfa Bychan", loc: "Aberystwyth", notes: "50 min drive to Aberaeron — take the narrow 2-mile access road slowly." },
+      { time: "~10:00", type: "shop", name: "Shop at Costcutter Aberaeron", loc: "Aberaeron", notes: "Mid-trip top-up shop, on route. Surprisingly well-stocked for a small-town shop — locals rate it. Buy for the next 2 nights of BBQ (Tŷ Gwyn Mwnt tonight, Caerfai tomorrow), plus milk + bacon for breakfasts. Pretty Georgian harbour town if you want to wander after." },
+      { time: "11:00", type: "sight", name: "Arrive New Quay", loc: "Ceredigion", notes: "Pretty fishing village on Cardigan Bay with brightly painted houses tumbling down the hill to a curved harbour. Park up and walk to the Main Pier for the boat trip." },
+      { time: "11:30", type: "activity", name: "Dolphin-spotting boat trip", loc: "New Quay Main Pier", notes: "1-hour cruise with New Quay Boat Trips (Ermol VI) into the Cardigan Bay Special Area of Conservation — resident bottlenose dolphin pod, Atlantic grey seals, sea birds. £15 adult / £7.50 child (~£37.50 family of 4). PRE-BOOK — August trips sell out. Use the loo before boarding (no toilet on the 1-hour boats). Wrap up — windy at sea.", phone: "01545 560800", link: "https://www.newquayboattrips.co.uk/", booking: "urgent" },
+      { time: "~12:30", type: "food", name: "Lunch at New Quay harbour", loc: "New Quay", notes: "Plenty of options along the harbour: The Hungry Trout (modern Welsh seafood), The Lime Crab (fish & chips and lobster rolls), or The Black Lion (Dylan Thomas' pub, traditional menu). Eat on the wall watching the boats come in." },
+      { time: "~15:00", type: "stay", name: "Tŷ Gwyn, Mwnt", loc: "Cardigan · Night 6", notes: "Small working-farm campsite on the clifftop directly above Mwnt beach, one of Wales' prettiest coves. 4.9★. 15-minute walk down to the beach for sunset — dolphins regularly seen in the bay from the cliff path.", phone: "01239 614518", link: "https://campingatmwnt.com/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "BBQ at the campsite", loc: "Tŷ Gwyn, Mwnt", notes: "Charcoal BBQ or open campfire — both allowed here. Best to eat as the sun drops over Cardigan Bay." }
+    ]
+  },
+  {
+    num: 7, date: "Fri 7 Aug", weekday: "Friday",
+    title: "Pembrokeshire coast",
+    blurb: "Round Cardigan Bay through Fishguard, lunch at a tiny harbour village, into Pembrokeshire.",
+    drive: { miles: 55, hrs: "1h 45m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Ty+Gwyn+Caravan+and+Camping+Park+SA43+1QH&destination=Caerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT&waypoints=Solva+SA62+6UU%7CSt+Davids+SA62+6PE&travelmode=driving",
+    stops: [
+      { time: "~11:15", type: "depart", name: "Depart Tŷ Gwyn, Mwnt", loc: "Cardigan", notes: "1h 15min drive to Solva for lunch. Slower morning option after a busy week." },
+      { time: "~12:30", type: "food", name: "Lunch at Solva", loc: "Pembrokeshire", notes: "Tiny picturesque harbour village 3 miles east of St Davids — old lime kilns line the edge of the harbour, sailing boats moored up. Lunch at The Cambrian Inn (proper pub food) or one of the harbour-side cafés. Scenic 30-min walk up Solva Head if time." },
+      { time: "~14:30", type: "sight", name: "St Davids", loc: "Pembrokeshire", notes: "The UK's smallest city — granted city status in the 1990s because of its 12th-century cathedral, the burial site of Wales' patron saint. Tiny medieval centre with independent shops, the ruined Bishop's Palace, ice-cream parlours." },
+      { time: "~16:30", type: "stay", name: "Caerfai Bay", loc: "St Davids · Night 7", notes: "Clifftop family campsite directly above a small sandy beach with a steep path down. 10-minute walk into St Davids along a coastal field path. Pembrokeshire Coast Path runs through the site. Free BBQ stand loan from reception. BOOK FIRST — fills fastest of all sites on this trip.", phone: "01437 720274", link: "http://caerfaibay.co.uk/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "Raised charcoal BBQ on the cliff", loc: "Caerfai Bay", notes: "BBQ on a stand 2ft off the grass (strict site rule — free stand from reception). Watch the sunset over St Brides Bay with Ramsey Island in the distance." }
+    ]
+  },
+  {
+    num: 8, date: "Sat 8 Aug", weekday: "Saturday",
+    title: "Brecon Beacons",
+    blurb: "East across Carmarthenshire, lunch at a pretty market town, on to the Beacons.",
+    drive: { miles: 95, hrs: "2h 15m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Caerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT&destination=Pencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&waypoints=Tesco+Extra+Haverfordwest+SA61+1BU%7CLlandeilo+SA19+6BB&travelmode=driving",
+    stops: [
+      { time: "~10:00", type: "depart", name: "Depart Caerfai Bay", loc: "St Davids", notes: "30 min drive to Haverfordwest for the last shop of the trip." },
+      { time: "~10:30", type: "shop", name: "Shop at Tesco Haverfordwest", loc: "Haverfordwest", notes: "Last shop of the trip — breakfast for Sunday + road snacks for the long drive home. ~20 min stop, on route. No BBQ supplies needed (pub dinner tonight at the Royal Oak)." },
+      { time: "~12:30", type: "food", name: "Lunch at Llandeilo", loc: "Carmarthenshire", notes: "Pretty Georgian market town with colourful painted houses, independent shops, and a strong food scene. Ginhaus Deli (Rhosmaen St) does great brunch/lunch boards; The Angel does proper pub food. Quick walk to Dinefwr Park (NT) for the kids to stretch their legs if there's time." },
+      { time: "~15:30", type: "stay", name: "Pencelli Castle", loc: "Brecon · Night 8", notes: "Award-winning family campsite — named after the medieval castle that once stood on the land. NOT a castle visit. Sits between the Brecon Beacons and the Monmouthshire & Brecon Canal. Heated facilities, large pitches, 4.8★. Pen-y-Fan trailhead a short drive away.", phone: "01874 665451", link: "http://www.pencelli-castle.com/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "Dinner at the Royal Oak Inn", loc: "Pencelli", notes: "Last-night sit-down dinner. Family-run pub 100m from the campsite entrance — canal-side beer garden, hearty home-cooked food, real ales. 4.5★, 884 reviews. Kitchen stops taking orders at 8pm — 7pm is safest. Saturday August will be busy — BOOK A TABLE.", phone: "01874 665396", link: "https://www.theroyaloakpencelli.com/", booking: "table" }
+    ]
+  },
+  {
+    num: 9, date: "Sun 9 Aug", weekday: "Sunday",
+    title: "Home via Ludlow",
+    blurb: "Relaxed final morning at Pencelli, lunch in Ludlow, back to Follifoot by evening. Van back to James by 8pm.",
+    drive: { miles: 240, hrs: "5h 00m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Pencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&destination=Follifoot+HG3&waypoints=Ludlow+SY8&travelmode=driving",
+    stops: [
+      { time: "~10:30", type: "depart", name: "Depart Pencelli Castle", loc: "Brecon", notes: "2h drive to Ludlow for lunch. ~5h total driving home — need to be back to drop the van with James by 8pm." },
+      { time: "~12:30", type: "food", name: "Ludlow", loc: "Shropshire", notes: "Historic Shropshire market town with a Norman castle ruin overlooking the river, half-timbered Tudor buildings, and a strong food reputation. Plenty of independent pubs and cafés around the market square for a lunch stop." },
+      { time: "20:00", type: "return", name: "Van return", loc: "Follifoot", notes: "Late drop-off (£50 paid). Refuel + clean before return." }
+    ]
+  }
+];
+
+// Project lat/lng to SVG coords
+const BOUNDS = { minLat: 51.5, maxLat: 54.2, minLng: -5.5, maxLng: -1.3 };
+const VIEWBOX = { w: 500, h: 600 };
+const project = (lat, lng) => {
+  const x = ((lng - BOUNDS.minLng) / (BOUNDS.maxLng - BOUNDS.minLng)) * VIEWBOX.w;
+  const y = ((BOUNDS.maxLat - lat) / (BOUNDS.maxLat - BOUNDS.minLat)) * VIEWBOX.h;
+  return [x, y];
+};
+
+const OVERNIGHT_COORDS = [
+  { day: 1, name: "Erw Glas", lat: 53.1981, lng: -3.8240 },
+  { day: 2, name: "Snowdon BC", lat: 53.0545, lng: -4.1360 },
+  { day: 3, name: "Snowdon BC", lat: 53.0545, lng: -4.1360 },
+  { day: 4, name: "Shell Is.", lat: 52.8191, lng: -4.1427 },
+  { day: 5, name: "Aberystwyth", lat: 52.3736, lng: -4.1082 },
+  { day: 6, name: "Mwnt", lat: 52.1363, lng: -4.6342 },
+  { day: 7, name: "Caerfai", lat: 51.8733, lng: -5.2583 },
+  { day: 8, name: "Pencelli", lat: 51.9148, lng: -3.3179 }
+];
+const HOME = { name: "Follifoot", lat: 53.9663, lng: -1.4826 };
+
+const STOP_META = {
+  pickup: { icon: Car, color: "var(--accent)", label: "Pickup" },
+  depart: { icon: Navigation, color: "var(--slate)", label: "Depart" },
+  return: { icon: Car, color: "var(--accent)", label: "Return" },
+  sight: { icon: Camera, color: "var(--green)", label: "Stop" },
+  food: { icon: Utensils, color: "var(--rust)", label: "Food" },
+  shop: { icon: ShoppingCart, color: "var(--accent)", label: "Shop" },
+  activity: { icon: Zap, color: "var(--accent)", label: "Activity" },
+  stay: { icon: Bed, color: "var(--ink)", label: "Overnight" }
+};
+
+const BOOKING_META = {
+  table: { label: "Restaurant", urgency: "low" },
+  pitch: { label: "Campsite", urgency: "high" },
+  urgent: { label: "Activity", urgency: "critical" }
+};
+
+function StatusBadge({ booked, urgency }) {
+  if (booked) return <span style={{ background: "var(--green)", color: "var(--cream)" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">Booked</span>;
+  if (urgency === "critical") return <span style={{ background: "var(--rust)", color: "var(--cream)" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">Book now</span>;
+  return <span style={{ background: "var(--accent)", color: "var(--cream)" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">To book</span>;
+}
+
+function StopRow({ stop, isLast }) {
+  const meta = STOP_META[stop.type];
+  const Icon = meta.icon;
+  return (
+    <div className="flex gap-3 relative">
+      {!isLast && <div className="absolute left-[15px] top-8 bottom-0 w-[1px]" style={{ background: "var(--line)" }} />}
+      <div className="relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ background: meta.color }}>
+        <Icon size={15} color="var(--cream)" strokeWidth={2.2} />
+      </div>
+      <div className="flex-1 pb-5">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-xs font-mono tracking-tight" style={{ color: "var(--slate)" }}>{stop.time}</span>
+          <h4 className="font-serif text-base font-medium" style={{ color: "var(--ink)" }}>{stop.name}</h4>
+          {stop.optional && <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--slate)" }}>optional</span>}
+        </div>
+        <p className="text-xs mt-0.5" style={{ color: "var(--slate)" }}>{stop.loc}</p>
+        {stop.notes && <p className="text-sm mt-1.5 leading-snug" style={{ color: "var(--ink)" }}>{stop.notes}</p>}
+        <div className="flex flex-wrap gap-3 mt-2 items-center">
+          {stop.booking && <StatusBadge booked={false} urgency={BOOKING_META[stop.booking]?.urgency} />}
+          {stop.phone && <a href={`tel:${stop.phone.replace(/\s/g, '')}`} className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><Phone size={11} />{stop.phone}</a>}
+          {stop.link && <a href={stop.link} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><ExternalLink size={11} />Website</a>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DayCard({ day, open, onToggle }) {
+  return (
+    <article className="border-t" style={{ borderColor: "var(--line)" }}>
+      <button onClick={onToggle} className="w-full text-left py-5 px-1 flex items-start gap-4 hover:opacity-80 transition-opacity">
+        <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-serif text-xl" style={{ background: "var(--ink)", color: "var(--cream)" }}>
+          {day.num}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-xs uppercase tracking-widest font-medium" style={{ color: "var(--slate)" }}>{day.date}</span>
+          </div>
+          <h3 className="font-serif text-xl md:text-2xl leading-tight mt-0.5" style={{ color: "var(--ink)" }}>{day.title}</h3>
+          <p className="text-sm mt-1.5 leading-snug" style={{ color: "var(--slate)" }}>{day.blurb}</p>
+          <div className="flex gap-4 mt-3 text-xs" style={{ color: "var(--slate)" }}>
+            <span className="inline-flex items-center gap-1"><Car size={12} />{day.drive.miles} mi · {day.drive.hrs}</span>
+            <span className="inline-flex items-center gap-1"><MapPin size={12} />{day.stops.length} stop{day.stops.length > 1 ? 's' : ''}</span>
+          </div>
+        </div>
+        <div className="flex-shrink-0 pt-2">
+          {open ? <ChevronDown size={20} style={{ color: "var(--slate)" }} /> : <ChevronRight size={20} style={{ color: "var(--slate)" }} />}
+        </div>
+      </button>
+      {open && (
+        <div className="pb-6 pl-1">
+          <div className="ml-16 mb-5">
+            <a href={day.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full transition-colors" style={{ background: "var(--ink)", color: "var(--cream)" }}>
+              <Navigation size={14} />
+              Open day {day.num} in Google Maps
+            </a>
+          </div>
+          <div className="ml-16">
+            {day.stops.map((s, i) => <StopRow key={i} stop={s} isLast={i === day.stops.length - 1} />)}
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function RouteMap() {
+  const [home] = useState(project(HOME.lat, HOME.lng));
+  const overnights = useMemo(() => OVERNIGHT_COORDS.map(o => ({ ...o, xy: project(o.lat, o.lng) })), []);
+  // Deduplicate consecutive same locations (Cwellyn nights 2 & 3)
+  const routePath = useMemo(() => {
+    const pts = [home, ...overnights.map(o => o.xy), home];
+    return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  }, [home, overnights]);
+
+  return (
+    <div className="rounded-lg overflow-hidden" style={{ background: "var(--stone)" }}>
+      <svg viewBox={`0 0 ${VIEWBOX.w} ${VIEWBOX.h}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <pattern id="grain" patternUnits="userSpaceOnUse" width="3" height="3">
+            <rect width="3" height="3" fill="var(--stone)" />
+            <circle cx="1.5" cy="1.5" r="0.3" fill="var(--ink)" opacity="0.08" />
+          </pattern>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--rust)" />
+          </marker>
+        </defs>
+        <rect width={VIEWBOX.w} height={VIEWBOX.h} fill="url(#grain)" />
+
+        {/* Compass + decorative elements */}
+        <g transform="translate(440, 50)" opacity="0.55">
+          <circle r="22" fill="none" stroke="var(--ink)" strokeWidth="0.6" />
+          <text textAnchor="middle" y="-26" className="font-serif" fontSize="9" fill="var(--ink)" letterSpacing="2">N</text>
+          <path d="M0,-18 L4,0 L0,3 L-4,0 Z" fill="var(--ink)" />
+          <path d="M0,18 L4,0 L0,-3 L-4,0 Z" fill="var(--ink)" opacity="0.3" />
+        </g>
+
+        {/* Subtle coordinate ticks */}
+        <g opacity="0.25" fontSize="6" fontFamily="monospace" fill="var(--slate)">
+          <text x="10" y="20">53°N</text>
+          <text x="10" y={VIEWBOX.h - 8}>52°N</text>
+        </g>
+
+        {/* Route path */}
+        <path d={routePath} fill="none" stroke="var(--rust)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 4" opacity="0.85" />
+
+        {/* Home marker */}
+        <g transform={`translate(${home[0]}, ${home[1]})`}>
+          <circle r="9" fill="var(--cream)" stroke="var(--ink)" strokeWidth="1.5" />
+          <circle r="3" fill="var(--ink)" />
+          <text x="13" y="-8" className="font-serif" fontSize="11" fill="var(--ink)" fontWeight="500">Follifoot</text>
+          <text x="13" y="3" fontSize="7.5" fill="var(--slate)" letterSpacing="1">START · END</text>
+        </g>
+
+        {/* Overnight markers */}
+        {overnights.map((o, i) => {
+          // Skip rendering label for duplicate Cwellyn (day 3) but keep the dot
+          const isDup = i > 0 && overnights[i - 1].name === o.name;
+          // Label positioning - offset to avoid overlap
+          const labelOffsets = {
+            "Erw Glas": { x: 14, y: 4 },
+            "Snowdon BC": { x: -8, y: 16 },
+            "Shell Is.": { x: -55, y: 4 },
+            "Aberystwyth": { x: -70, y: 4 },
+            "Mwnt": { x: -38, y: 4 },
+            "Caerfai": { x: -48, y: 4 },
+            "Pencelli": { x: 12, y: 4 }
+          };
+          const off = labelOffsets[o.name] || { x: 12, y: 4 };
+          return (
+            <g key={i} transform={`translate(${o.xy[0]}, ${o.xy[1]})`}>
+              {!isDup && (
+                <>
+                  <circle r="11" fill="var(--cream)" stroke="var(--ink)" strokeWidth="1.5" />
+                  <text textAnchor="middle" dy="3.5" className="font-serif" fontSize="11" fontWeight="600" fill="var(--ink)">{o.day}</text>
+                  <text x={off.x} y={off.y} fontSize="9" fill="var(--ink)" fontWeight="500">{o.name}</text>
+                </>
+              )}
+              {isDup && (
+                <>
+                  <circle r="6" fill="var(--cream)" stroke="var(--ink)" strokeWidth="1.5" />
+                  <text textAnchor="middle" dy="2.5" fontSize="7" fontWeight="600" fill="var(--ink)">{o.day}</text>
+                </>
+              )}
+            </g>
+          );
+        })}
+
+        {/* Title in corner */}
+        <g transform="translate(20, 545)" opacity="0.7">
+          <text fontSize="7" fill="var(--slate)" letterSpacing="2" fontFamily="monospace">~950 MI · 9 DAYS · 8 NIGHTS</text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+function PackingList() {
+  const [packed, setPacked] = useSharedState('packing', {});
+
+  const groups = [
+    {
+      title: "Van handover with James",
+      items: [
+        { id: "ehu-confirm", name: "Confirm EHU cable is in the van", note: "Critical — van has NO solar/off-grid capability, so every campsite stop needs mains hookup. Confirm cable supplied and where stored." },
+        { id: "carplay-cable", name: "USB-C cable for Apple CarPlay", note: "T6.1 Californias have CarPlay/Android Auto as standard — plug phone in, tap 'App' on the head unit, Google Maps/Waze displays on the dash. Wired only (no wireless CarPlay on the base head unit). USB-C-to-Lightning (older iPhones) or USB-C-to-USB-C (iPhone 15+)." }
+      ]
+    },
+    {
+      title: "Bedding & towels",
+      items: [
+        { id: "linens-van", name: "Bedding for the in-van beds", note: "Van has NO linens. Sheets, pillows, duvets for Dom + 2 of the kids (3 sleeping in the van, Mylo in tent). Sleeping bags also work and pack smaller." },
+        { id: "towels-van", name: "Bath/shower towels × 4", note: "Van has NO towels. One per person for campsite showers. Microfibre dries fastest." }
+      ]
+    },
+    {
+      title: "BBQ & cooking",
+      items: [
+        { id: "grill", name: "Borrow BBQ from Barry & George", note: "Must be raised 2ft off the grass — required at Shell Island, Morfa Bychan, Pencelli. Caerfai loans stands free from reception so doesn't matter there. Check the BBQ meets the height rule before loading." },
+        { id: "charcoal", name: "4 × Instant Light Charcoal Bags from The Range", note: "Single-use bags — just light the corner, no firelighters or arranging needed. One per BBQ night: Shell Island (Tue), Morfa Bychan (Wed), Mwnt (Thu), Caerfai (Fri). Saturday is pub dinner at the Royal Oak. NB Snowdon Base Camp Sun + Mon use their kiln-dried logs only (£7/bag at the pub), NOT charcoal." },
+        { id: "firelighters", name: "Long matches or wind-proof lighter", note: "For lighting the instant-light bags and the kiln-dried logs at Snowdon Base Camp. Welsh evenings get breezy — wind-proof lighter is the reliable choice." },
+        { id: "tongs", name: "Long-handled tongs + heatproof gloves", note: "Cooking over wood and embers — longer reach needed." },
+        { id: "foil", name: "Heavy-duty foil + kitchen roll", note: "Foil-wrapped jacket potatoes in the embers = winner with kids." },
+        { id: "coolbox", name: "Cool box + ice packs", note: "Van has fridge but NO freezer. Cool box handy for keeping BBQ meat cold or holding overflow. Caerfai offers freeze-pack service for 20p." }
+      ]
+    },
+    {
+      title: "Mylo's tent",
+      items: [
+        { id: "tent", name: "2-3 person tent", note: "Pitches alongside the van — Mylo's own space." },
+        { id: "sleepbag", name: "Sleeping bag + mat", note: "Van linens cover the in-van beds, but Mylo's tent needs its own. 3-season bag — Welsh nights can drop to 8°C even in August." },
+        { id: "pillow", name: "Camp pillow", note: "Inflatable or stuff-sack style — squashes into the van for transport." },
+        { id: "headtorch", name: "Headtorch", note: "For the walk from tent to facilities at night." }
+      ]
+    },
+    {
+      title: "Walking & weather",
+      items: [
+        { id: "waterproofs", name: "Waterproof jackets × 4", note: "Non-negotiable even in August — Wales averages 12 wet days a month in summer." },
+        { id: "boots", name: "Walking boots × 4", note: "For Pen-y-Fan, Llyn Idwal, coastal paths." },
+        { id: "layers", name: "Fleece or long-sleeve top × 4", note: "Mountain spots (Llyn Idwal, Pen-y-Fan) and Brecon evenings can be chilly even in August." },
+        { id: "socks", name: "Twice as many socks as you think", note: "Wet socks are the kid-trip killer." }
+      ]
+    },
+    {
+      title: "Beach & swim",
+      items: [
+        { id: "swimwear", name: "Swimwear × 4 + rash vests for kids", note: "3 prime beach days: Shell Island (Tue), Mwnt (Thu), Caerfai (Fri). Welsh sea is cold — rash vests extend beach time for Mason + Harper." },
+        { id: "towels", name: "Beach towels × 4", note: "Separate from the bath/shower towels — beach use means sand and salt water. Quick-dry microfibre saves van space." },
+        { id: "sun", name: "Factor 50 sun cream + after-sun", note: "Welsh sun is sneaky — kids burn on overcast days." }
+      ]
+    },
+    {
+      title: "Kids' kit",
+      items: [
+        { id: "booster", name: "Mason's car seat", note: "Britax Kidfix i-Size from the iX3 — install in one of the van's ISOFIX points." },
+        { id: "tablets", name: "Switch + iPad + chargers", note: "iPad needs fixing before the trip. Pre-download Switch games and iPad shows for offline use — Day 1 and Day 9 are 3-5 hour drives with patchy signal." },
+        { id: "snacks", name: "Road snacks stash", note: "Veg sticks, oat bars, crisps — non-melting." },
+        { id: "firstaid", name: "First aid kit + plasters", note: "Family-size pack." },
+        { id: "books", name: "Books / activity packs", note: "Quiet-time options for non-screen periods." }
+      ]
+    },
+    {
+      title: "Documents & digital",
+      items: [
+        { id: "goboony", name: "Goboony booking confirmation + van docs", note: "Print + on phone. James needs to provide V5 / insurance / breakdown details at handover." },
+        { id: "zipworld-conf", name: "Zip World booking confirmation", note: "Print + on phone for the morning of Sun 2 Aug." },
+        { id: "campsite-confs", name: "All campsite confirmations", note: "Some sites are phone-only — write down the booking ref." },
+        { id: "tides", name: "Tide times app", note: "Critical for Shell Island Day 4 — causeway floods." },
+        { id: "maps", name: "Download offline Google Maps for Wales", note: "Big rural patches (Snowdonia, north Pembrokeshire, Brecon Beacons) have flaky phone signal — CarPlay won't help if Maps can't load. In the Google Maps app: Profile → Offline maps → Select your own map → drag the box to cover all of Wales + Shropshire. Do it on home WiFi (~500MB). OS Maps app is the alternative for walking routes." },
+        { id: "cadw", name: "Cadw Explorer Pass (7-day family)", note: "~£44 family pass covers Conwy Castle (Day 2) + Harlech Castle (Day 5) + Bishop's Palace at St Davids (Day 7 if you fancy it). On-the-door price for Conwy + Harlech alone is ~£74, so the pass saves ~£30. Buy it at Conwy reception on Day 2." }
+      ]
+    },
+    {
+      title: "Buy on the way",
+      items: [
+        { id: "bigshop1", name: "Big shop near Llandudno (Day 1 evening or Day 2 morning)", note: "Asda Llandudno or Sainsbury's Llandudno Junction. Stock up for 3-4 days." },
+        { id: "bbqfood", name: "BBQ food for Cwellyn", note: "Burgers, sausages, marshmallows, jacket potatoes, halloumi." },
+        { id: "logs", name: "Logs at Cwellyn pub on arrival", note: "£7/bag kiln-dried. No bringing your own wood." },
+        { id: "bigshop2", name: "Top-up shop in Aberystwyth (Day 5)", note: "Morrisons or Tesco — for the back half of the trip." }
+      ]
+    }
+  ];
+
+  const allItems = groups.flatMap(g => g.items);
+  const done = allItems.filter(it => packed[it.id]).length;
+
+  return (
+    <div>
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-2">
+        <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>Before you go</h2>
+        <span className="text-sm" style={{ color: "var(--slate)" }}>{done} of {allItems.length} packed</span>
+      </div>
+      <div className="w-full h-1 rounded-full mb-8 overflow-hidden" style={{ background: "var(--stone)" }}>
+        <div className="h-full transition-all duration-500" style={{ width: `${(done / allItems.length) * 100}%`, background: "var(--green)" }} />
+      </div>
+
+      {groups.map((group, gi) => (
+        <div key={gi} className="mb-7">
+          <h3 className="font-serif text-lg mb-3 pb-1.5 border-b" style={{ color: "var(--ink)", borderColor: "var(--line)" }}>
+            {group.title}
+          </h3>
+          <ul className="space-y-2">
+            {group.items.map(it => {
+              const isPacked = packed[it.id];
+              return (
+                <li key={it.id} className="flex items-start gap-3 py-1.5">
+                  <button onClick={() => setPacked(p => ({ ...p, [it.id]: !p[it.id] }))} className="flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors mt-0.5" style={{ borderColor: isPacked ? "var(--green)" : "var(--line)", background: isPacked ? "var(--green)" : "transparent" }}>
+                    {isPacked && <Check size={12} color="var(--cream)" strokeWidth={3} />}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium" style={{ color: "var(--ink)", textDecoration: isPacked ? "line-through" : "none", opacity: isPacked ? 0.55 : 1 }}>
+                      {it.name}
+                    </div>
+                    {it.note && <div className="text-xs mt-0.5" style={{ color: "var(--slate)", opacity: isPacked ? 0.55 : 1 }}>{it.note}</div>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BookingsList() {
+  const [bookings, setBookings] = useSharedState('bookings', {
+    james: false, zipworld: false, caerfai: false, newquayboats: false, mwnt: false, pencelli: false, royaloak: false,
+    cwellyn: false, erwglas: false, morfa: false, shell: false, cornmill: false, conwy: false
+  });
+
+  const items = [
+    { id: "james", name: "Pay James — £100 van extension", urgency: "high", date: "Before 1 Aug", note: "£50 early pickup (Sat 1 Aug) + £50 late return (Sun 9 Aug). Pay via Goboony." },
+    { id: "zipworld", name: "Zip World Betws-y-Coed — Fforest Coaster", urgency: "critical", date: "Sun 2 Aug ~12:30", link: "https://www.zipworld.co.uk/adventure/fforest-coaster", note: "Whole family rides: Mason on your lap (3+ with adult), Harper & Mylo solo (9+). Book one slot for all 4 at once." },
+    { id: "caerfai", name: "Caerfai Bay, St Davids", urgency: "critical", date: "Fri 7 Aug", phone: "01437 720274", link: "http://caerfaibay.co.uk/", note: "Fills fastest of all campsites. Charcoal BBQs only, raised 2ft off grass — free BBQ stand loan from reception." },
+    { id: "newquayboats", name: "New Quay Boat Trips — Dolphin Spotting", urgency: "critical", date: "Thu 6 Aug ~11:30", phone: "01545 560800", link: "https://www.newquayboattrips.co.uk/", note: "1-hour Ermol VI trip, £37.50 family of 4. August + dolphins = book ahead." },
+    { id: "mwnt", name: "Tŷ Gwyn, Mwnt", urgency: "high", date: "Thu 6 Aug", phone: "01239 614518", link: "https://campingatmwnt.com/", note: "Small cliff-top site" },
+    { id: "pencelli", name: "Pencelli Castle, Brecon", urgency: "high", date: "Sat 8 Aug", phone: "01874 665451", link: "http://www.pencelli-castle.com/", note: "Popular Beacons site" },
+    { id: "royaloak", name: "Royal Oak Inn, Pencelli — last-night dinner", urgency: "high", date: "Sat 8 Aug ~19:00", phone: "01874 665396", link: "https://www.theroyaloakpencelli.com/", note: "100m walk from the campsite. Kitchen stops at 8pm — aim for 7pm. Saturday August will be busy, book a table for 4." },
+    { id: "cwellyn", name: "Snowdon Base Camp, Rhyd-Ddu (2 nights)", urgency: "high", date: "Sun 2 + Mon 3 Aug", phone: "01766 890321", link: "http://www.snowdoninn.co.uk/", note: "Phone-only via Cwellyn Arms pub (same owner). Specifically ask for one of the 3 EHU campervan bays — only 3 available." },
+    { id: "erwglas", name: "Erw Glas, Maenan", urgency: "high", date: "Sat 1 Aug", phone: "01492 702486", link: "https://www.erwglasglampingandcamping.co.uk/", note: "Book a hard-standing pitch with EHU. Pre-order takeaway pizza for Sat night + breakfast hamper for Sun morning." },
+    { id: "morfa", name: "Morfa Bychan, Aberystwyth", urgency: "high", date: "Wed 5 Aug", phone: "01970 617254", link: "https://www.hillandale.co.uk/our-parks/morfa-bychan-holiday-park" },
+    { id: "shell", name: "Shell Island, Llanbedr", urgency: "low", date: "Tue 4 Aug", phone: "01341 241453", link: "http://www.shellisland.co.uk/", note: "Turn-up site, but worth a call" },
+    { id: "cornmill", name: "The Corn Mill, Llangollen — lunch table", urgency: "low", date: "Sat 1 Aug ~13:00", link: "https://www.cornmill-llangollen.co.uk/", note: "Terrace table over the river. Book ahead — Saturday August lunch fills up." },
+    { id: "conwy", name: "Conwy Castle / Cadw Explorer Pass", urgency: "low", date: "Sun 2 Aug", link: "https://cadw.gov.wales/visit/places-to-visit/conwy-castle", note: "Buy the 7-day Explorer Pass at Conwy reception on the day — covers Conwy + Harlech + Bishop's Palace for the whole trip." }
+  ];
+
+  const done = Object.values(bookings).filter(Boolean).length;
+  return (
+    <div>
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-2">
+        <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>Bookings to make</h2>
+        <span className="text-sm" style={{ color: "var(--slate)" }}>{done} of {items.length} done</span>
+      </div>
+      <div className="w-full h-1 rounded-full mb-6 overflow-hidden" style={{ background: "var(--stone)" }}>
+        <div className="h-full transition-all duration-500" style={{ width: `${(done / items.length) * 100}%`, background: "var(--green)" }} />
+      </div>
+      <ul className="space-y-2">
+        {items.map(it => {
+          const isDone = bookings[it.id];
+          const urgencyColor = it.urgency === "critical" ? "var(--rust)" : it.urgency === "high" ? "var(--accent)" : "var(--slate)";
+          return (
+            <li key={it.id} className="rounded-lg p-4 flex items-start gap-3 transition-all" style={{ background: isDone ? "var(--stone)" : "var(--cream)", border: "1px solid var(--line)", opacity: isDone ? 0.55 : 1 }}>
+              <button onClick={() => setBookings(b => ({ ...b, [it.id]: !b[it.id] }))} className="flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center border-2 transition-colors mt-0.5" style={{ borderColor: isDone ? "var(--green)" : "var(--line)", background: isDone ? "var(--green)" : "transparent" }}>
+                {isDone && <Check size={14} color="var(--cream)" strokeWidth={3} />}
+              </button>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <h4 className="font-serif text-base font-medium" style={{ color: "var(--ink)", textDecoration: isDone ? "line-through" : "none" }}>{it.name}</h4>
+                  {!isDone && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0" style={{ background: urgencyColor, color: "var(--cream)" }}>{it.urgency === "critical" ? "Now" : it.urgency === "high" ? "This week" : "Anytime"}</span>}
+                </div>
+                <p className="text-xs mt-0.5" style={{ color: "var(--slate)" }}>{it.date}</p>
+                {it.note && <p className="text-xs mt-1.5 italic" style={{ color: "var(--slate)" }}>{it.note}</p>}
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {it.phone && <a href={`tel:${it.phone.replace(/\s/g, '')}`} className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><Phone size={11} />{it.phone}</a>}
+                  {it.link && <a href={it.link} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><ExternalLink size={11} />Book online</a>}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+export default function App() {
+  const [openDay, setOpenDay] = useState(1);
+
+  return (
+    <div className="min-h-screen" style={{
+      "--cream": "#f5efe0",
+      "--stone": "#e8e0cc",
+      "--ink": "#1f2d27",
+      "--slate": "#6b746f",
+      "--green": "#3a5c47",
+      "--rust": "#b9542f",
+      "--accent": "#7a5b3e",
+      "--line": "rgba(31, 45, 39, 0.12)",
+      background: "var(--cream)",
+      fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
+      color: "var(--ink)"
+    }}>
+      <div className="max-w-2xl mx-auto px-5 py-8 md:py-12">
+
+        {/* Header */}
+        <header className="mb-8">
+          <p className="text-xs uppercase tracking-[0.3em] font-medium mb-3" style={{ color: "var(--rust)" }}>{TRIP.dates}</p>
+          <h1 className="font-serif text-5xl md:text-7xl leading-[0.95] mb-3" style={{ color: "var(--ink)" }}>
+            {TRIP.title}
+          </h1>
+          <p className="font-serif italic text-lg md:text-xl leading-snug mb-6" style={{ color: "var(--slate)" }}>
+            {TRIP.subtitle}
+          </p>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pb-6 border-b" style={{ borderColor: "var(--line)" }}>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Vehicle</p>
+              <p style={{ color: "var(--ink)" }}>{TRIP.vehicle}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Party</p>
+              <p style={{ color: "var(--ink)" }}>{TRIP.party}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Nights</p>
+              <p style={{ color: "var(--ink)" }}>8 in the van</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Driving</p>
+              <p style={{ color: "var(--ink)" }}>{TRIP.totalMiles} mi · {TRIP.totalDrivingHrs}</p>
+            </div>
+          </div>
+        </header>
+
+        {/* Map */}
+        <section className="mb-10">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>The route</h2>
+            <span className="text-xs uppercase tracking-widest" style={{ color: "var(--slate)" }}>Numbered by night</span>
+          </div>
+          <RouteMap />
+          <div className="mt-3 flex items-center justify-center gap-4 text-xs flex-wrap" style={{ color: "var(--slate)" }}>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "var(--ink)" }} />Overnight</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-6 h-[2px]" style={{ background: "var(--rust)", borderTop: "1px dashed" }} />Drive</span>
+          </div>
+          <div className="mt-4 text-center">
+            <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CShell+Island+LL45+2PJ%7CMorfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CCaerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
+              <MapPin size={14} /> View full route in Google Maps
+            </a>
+          </div>
+        </section>
+
+        {/* Days */}
+        <section className="mb-12">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>Day by day</h2>
+            <button onClick={() => setOpenDay(openDay === 'all' ? null : 'all')} className="text-xs uppercase tracking-widest hover:underline" style={{ color: "var(--accent)" }}>
+              {openDay === 'all' ? 'Collapse all' : 'Expand all'}
+            </button>
+          </div>
+          <div>
+            {DAYS.map(day => (
+              <DayCard
+                key={day.num}
+                day={day}
+                open={openDay === 'all' || openDay === day.num}
+                onToggle={() => setOpenDay(openDay === day.num ? null : day.num)}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Packing */}
+        <section className="mb-12 pt-8 border-t" style={{ borderColor: "var(--line)" }}>
+          <PackingList />
+        </section>
+
+        {/* Bookings */}
+        <section className="mb-12 pt-8 border-t" style={{ borderColor: "var(--line)" }}>
+          <BookingsList />
+        </section>
+
+        {/* Footer */}
+        <footer className="text-center pt-6 border-t" style={{ borderColor: "var(--line)" }}>
+          <p className="font-serif italic text-sm" style={{ color: "var(--slate)" }}>
+            Iechyd da · Safe travels
+          </p>
+        </footer>
+      </div>
+    </div>
+  );
+}

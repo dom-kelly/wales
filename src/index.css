@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #f5efe0;
+  --paper: #faf6ec;
+  --stone: #e8e0cc;
+  --ink: #1f2d27;
+  --slate: #6b746f;
+  --green: #3a5c47;
+  --rust: #b9542f;
+  --accent: #7a5b3e;
+  --line: rgba(31, 45, 39, 0.14);
+}
+
+html, body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Fraunces', Georgia, serif;
+  font-variation-settings: "SOFT" 50;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-serif { font-family: 'Fraunces', Georgia, serif; }
