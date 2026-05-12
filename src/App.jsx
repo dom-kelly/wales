@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { MapPin, Clock, Car, Bed, Utensils, Camera, Phone, ExternalLink, Check, X, Navigation, ChevronDown, ChevronRight, Calendar, Users, PoundSterling, AlertCircle, Mountain, Waves, Trees, Castle, Zap, ShoppingCart } from 'lucide-react';
 import { useSharedState } from './api.js';
 
@@ -219,9 +219,19 @@ function StopRow({ stop, isLast }) {
 }
 
 function DayCard({ day, open, onToggle }) {
+  const ref = useRef(null);
+  const handleToggle = () => {
+    const willOpen = !open;
+    onToggle();
+    if (willOpen) {
+      requestAnimationFrame(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  };
   return (
-    <article className="border-t" style={{ borderColor: "var(--line)" }}>
-      <button onClick={onToggle} className="w-full text-left py-5 px-1 flex items-start gap-4 hover:opacity-80 transition-opacity">
+    <article ref={ref} className="border-t" style={{ borderColor: "var(--line)" }}>
+      <button onClick={handleToggle} className="w-full text-left py-5 px-1 flex items-start gap-4 hover:opacity-80 transition-opacity">
         <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-serif text-xl" style={{ background: "var(--ink)", color: "var(--cream)" }}>
           {day.num}
         </div>
