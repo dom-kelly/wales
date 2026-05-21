@@ -102,7 +102,7 @@ const DAYS = [
     mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Pengarreg+Caravan+Park+Llanrhystud+SY23+5DJ&destination=Ty+Gwyn+Caravan+and+Camping+Park+SA43+1QH&waypoints=Costcutter+Aberaeron+SA46+0AS%7CNew+Quay+SA45&travelmode=driving",
     stops: [
       { time: "~09:10", type: "depart", name: "Depart Pengarreg", loc: "Llanrhystud", notes: "~30 min drive south down the A487 to Aberaeron." },
-      { time: "~10:00", type: "shop", name: "Shop at Costcutter Aberaeron", loc: "Aberaeron", notes: "Mid-trip top-up shop, on route. Surprisingly well-stocked for a small-town shop — locals rate it. Buy for the next 2 nights of BBQ (Tŷ Gwyn Mwnt tonight, Caerfai tomorrow), plus milk + bacon for breakfasts. Pretty Georgian harbour town if you want to wander after." },
+      { time: "~10:00", type: "shop", name: "Shop at Costcutter Aberaeron", loc: "Aberaeron", notes: "Mid-trip top-up shop, on route. Surprisingly well-stocked for a small-town shop — locals rate it. Buy for the next 2 nights of BBQ (Tŷ Gwyn Mwnt tonight, Porthclais tomorrow), plus milk + bacon for breakfasts. Pretty Georgian harbour town if you want to wander after." },
       { time: "11:00", type: "sight", name: "Arrive New Quay", loc: "Ceredigion", notes: "Pretty fishing village on Cardigan Bay with brightly painted houses tumbling down the hill to a curved harbour. Park up and walk to the Main Pier for the boat trip." },
       { time: "11:30", type: "activity", name: "Dolphin-spotting boat trip", loc: "New Quay Main Pier", notes: "1-hour cruise with New Quay Boat Trips (Ermol VI) into the Cardigan Bay Special Area of Conservation — resident bottlenose dolphin pod, Atlantic grey seals, sea birds. £15 adult / £7.50 child (~£37.50 family of 4). PRE-BOOK — August trips sell out. Use the loo before boarding (no toilet on the 1-hour boats). Wrap up — windy at sea.", phone: "01545 560800", link: "https://www.newquayboattrips.co.uk/", booking: "urgent" },
       { time: "~12:30", type: "food", name: "Lunch at New Quay harbour", loc: "New Quay", notes: "Plenty of options along the harbour: The Hungry Trout (modern Welsh seafood), The Lime Crab (fish & chips and lobster rolls), or The Black Lion (Dylan Thomas' pub, traditional menu). Eat on the wall watching the boats come in." },
@@ -115,13 +115,13 @@ const DAYS = [
     title: "Pembrokeshire coast",
     blurb: "Round Cardigan Bay through Fishguard, lunch at a tiny harbour village, into Pembrokeshire.",
     drive: { miles: 55, hrs: "1h 45m" },
-    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Ty+Gwyn+Caravan+and+Camping+Park+SA43+1QH&destination=Caerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT&waypoints=Solva+SA62+6UU%7CSt+Davids+SA62+6PE&travelmode=driving",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Ty+Gwyn+Caravan+and+Camping+Park+SA43+1QH&destination=Porthclais+Farm+Campsite+SA62+6RR&waypoints=Solva+SA62+6UU%7CSt+Davids+SA62+6PE&travelmode=driving",
     stops: [
       { time: "~11:15", type: "depart", name: "Depart Tŷ Gwyn, Mwnt", loc: "Cardigan", notes: "1h 15min drive to Solva for lunch. Slower morning option after a busy week." },
       { time: "~12:30", type: "food", name: "Lunch at Solva", loc: "Pembrokeshire", notes: "Tiny picturesque harbour village 3 miles east of St Davids — old lime kilns line the edge of the harbour, sailing boats moored up. Lunch at The Cambrian Inn (proper pub food) or one of the harbour-side cafés. Scenic 30-min walk up Solva Head if time." },
       { time: "~14:30", type: "sight", name: "St Davids", loc: "Pembrokeshire", notes: "The UK's smallest city — granted city status in the 1990s because of its 12th-century cathedral, the burial site of Wales' patron saint. Tiny medieval centre with independent shops, the ruined Bishop's Palace, ice-cream parlours." },
-      { time: "~16:30", type: "stay", name: "Caerfai Bay", loc: "St Davids · Night 7", notes: "Clifftop family campsite directly above a small sandy beach with a steep path down. 10-minute walk into St Davids along a coastal field path. Pembrokeshire Coast Path runs through the site. Free BBQ stand loan from reception. BOOK FIRST — fills fastest of all sites on this trip.", phone: "01437 720274", link: "http://caerfaibay.co.uk/", booking: "pitch" },
-      { time: "~19:00", type: "food", name: "Raised charcoal BBQ on the cliff", loc: "Caerfai Bay", notes: "BBQ on a stand 2ft off the grass (strict site rule — free stand from reception). Watch the sunset over St Brides Bay with Ramsey Island in the distance." }
+      { time: "~16:30", type: "stay", name: "Porthclais Farm Campsite", loc: "St Davids · Night 7", notes: "Booking confirmed. Family campsite beside Porthclais harbour, a short walk (~1 mile) from St Davids, with the Pembrokeshire Coast Path bordering the site and St Brides Bay below. No electric hook-up — this is the trip's one off-grid night (gas/leisure battery).", phone: "07970 439310", link: "https://porthclaiscampsite.co.uk/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "BBQ at the campsite", loc: "Porthclais", notes: "BBQs allowed — use the borrowed stand to keep it ≥6in off the grass, don't leave it unattended, fully extinguish after. (Porthclais rents stands for £1 + £10 deposit if needed.) Sunset over St Brides Bay with Ramsey Island offshore." }
     ]
   },
   {
@@ -129,9 +129,9 @@ const DAYS = [
     title: "Brecon Beacons",
     blurb: "East across Carmarthenshire, lunch at a pretty market town, on to the Beacons.",
     drive: { miles: 95, hrs: "2h 15m" },
-    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Caerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT&destination=Pencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&waypoints=Tesco+Extra+Haverfordwest+SA61+1BU%7CLlandeilo+SA19+6BB&travelmode=driving",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Porthclais+Farm+Campsite+SA62+6RR&destination=Pencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&waypoints=Tesco+Extra+Haverfordwest+SA61+1BU%7CLlandeilo+SA19+6BB&travelmode=driving",
     stops: [
-      { time: "~10:00", type: "depart", name: "Depart Caerfai Bay", loc: "St Davids", notes: "30 min drive to Haverfordwest for the last shop of the trip." },
+      { time: "~10:00", type: "depart", name: "Depart Porthclais", loc: "St Davids", notes: "30 min drive to Haverfordwest for the last shop of the trip." },
       { time: "~10:30", type: "shop", name: "Shop at Tesco Haverfordwest", loc: "Haverfordwest", notes: "Last shop of the trip — breakfast for Sunday + road snacks for the long drive home. ~20 min stop, on route. No BBQ supplies needed (pub dinner tonight at the Royal Oak)." },
       { time: "~12:30", type: "food", name: "Lunch at Llandeilo", loc: "Carmarthenshire", notes: "Pretty Georgian market town with colourful painted houses, independent shops, and a strong food scene. Ginhaus Deli (Rhosmaen St) does great brunch/lunch boards; The Angel does proper pub food. Quick walk to Dinefwr Park (NT) for the kids to stretch their legs if there's time." },
       { time: "~15:30", type: "stay", name: "Pencelli Castle", loc: "Brecon · Night 8", notes: "Award-winning family campsite — named after the medieval castle that once stood on the land. NOT a castle visit. Sits between the Brecon Beacons and the Monmouthshire & Brecon Canal. Heated facilities, large pitches, 4.8★. Pen-y-Fan trailhead a short drive away.", phone: "01874 665451", link: "http://www.pencelli-castle.com/", booking: "pitch" },
@@ -168,7 +168,7 @@ const OVERNIGHT_COORDS = [
   { day: 4, name: "Bennar Beach", lat: 52.7760, lng: -4.1190 },
   { day: 5, name: "Llanrhystud", lat: 52.2975, lng: -4.1665 },
   { day: 6, name: "Mwnt", lat: 52.1363, lng: -4.6342 },
-  { day: 7, name: "Caerfai", lat: 51.8733, lng: -5.2583 },
+  { day: 7, name: "Porthclais", lat: 51.8712, lng: -5.2834 },
   { day: 8, name: "Pencelli", lat: 51.9148, lng: -3.3179 }
 ];
 const HOME = { name: "Follifoot", lat: 53.9663, lng: -1.4826 };
@@ -411,7 +411,7 @@ function RouteMap() {
             "Bennar Beach": { x: -72, y: 4 },
             "Llanrhystud": { x: -74, y: 4 },
             "Mwnt": { x: -38, y: 4 },
-            "Caerfai": { x: -48, y: 4 },
+            "Porthclais": { x: -58, y: 4 },
             "Pencelli": { x: 12, y: 4 }
           };
           const off = labelOffsets[o.name] || { x: 12, y: 4 };
@@ -464,12 +464,12 @@ function PackingList() {
     {
       title: "BBQ & cooking",
       items: [
-        { id: "grill", name: "Borrow BBQ from Barry & George", note: "Must be raised off the grass — required at Bennar Beach, Llanrhystud, Pencelli. Caerfai loans stands free from reception so doesn't matter there. Check the BBQ meets the height rule before loading." },
-        { id: "charcoal", name: "4 × Instant Light Charcoal Bags from The Range", note: "Single-use bags — just light the corner, no firelighters or arranging needed. One per BBQ night: Bennar Beach (Tue), Llanrhystud (Wed), Mwnt (Thu), Caerfai (Fri). Saturday is pub dinner at the Royal Oak. NB Snowdon Base Camp Sun + Mon use their kiln-dried logs only (£7/bag at the pub), NOT charcoal." },
+        { id: "grill", name: "Borrow BBQ from Barry & George", note: "Must be raised off the grass — required at Bennar Beach, Llanrhystud, Porthclais, Pencelli. Check the BBQ meets the height rule before loading." },
+        { id: "charcoal", name: "4 × Instant Light Charcoal Bags from The Range", note: "Single-use bags — just light the corner, no firelighters or arranging needed. One per BBQ night: Bennar Beach (Tue), Llanrhystud (Wed), Mwnt (Thu), Porthclais (Fri). Saturday is pub dinner at the Royal Oak. NB Snowdon Base Camp Sun + Mon use their kiln-dried logs only (£7/bag at the pub), NOT charcoal." },
         { id: "firelighters", name: "Long matches or wind-proof lighter", note: "For lighting the instant-light bags and the kiln-dried logs at Snowdon Base Camp. Welsh evenings get breezy — wind-proof lighter is the reliable choice." },
         { id: "tongs", name: "Long-handled tongs + heatproof gloves", note: "Cooking over wood and embers — longer reach needed." },
         { id: "foil", name: "Heavy-duty foil + kitchen roll", note: "Foil-wrapped jacket potatoes in the embers = winner with kids." },
-        { id: "coolbox", name: "Cool box + ice packs", note: "Van has fridge but NO freezer. Cool box handy for keeping BBQ meat cold or holding overflow. Caerfai offers freeze-pack service for 20p." },
+        { id: "coolbox", name: "Cool box + ice packs", note: "Van has fridge but NO freezer. Cool box handy for keeping BBQ meat cold or holding overflow — useful for the off-grid night at Porthclais (no EHU)." },
         { id: "chairs", name: "4 × folding camp chairs", note: "One each for evenings at the pitch and BBQ nights. Light enough to carry over the boardwalk at Bennar Beach for the ~9pm sunset over Cardigan Bay." }
       ]
     },
@@ -494,7 +494,7 @@ function PackingList() {
     {
       title: "Beach & swim",
       items: [
-        { id: "swimwear", name: "Swimwear × 4 + rash vests for kids", note: "3 prime beach days: Bennar Beach (Tue), Mwnt (Thu), Caerfai (Fri). Welsh sea is cold — rash vests extend beach time for Mason + Harper." },
+        { id: "swimwear", name: "Swimwear × 4 + rash vests for kids", note: "3 prime beach days: Bennar Beach (Tue), Mwnt (Thu), St Davids beaches (Fri — Caerfai Bay / Whitesands nearby). Welsh sea is cold — rash vests extend beach time for Mason + Harper." },
         { id: "towels", name: "Beach towels × 4", note: "Separate from the bath/shower towels — beach use means sand and salt water. Quick-dry microfibre saves van space." },
         { id: "sun", name: "Factor 50 sun cream + after-sun", note: "Welsh sun is sneaky — kids burn on overcast days." }
       ]
@@ -515,7 +515,7 @@ function PackingList() {
         { id: "goboony", name: "Goboony booking confirmation + van docs", note: "Print + on phone. James needs to provide V5 / insurance / breakdown details at handover." },
         { id: "zipworld-conf", name: "Zip World booking confirmation", note: "Print + on phone for the morning of Sun 2 Aug." },
         { id: "campsite-confs", name: "All campsite confirmations", note: "Some sites are phone-only — write down the booking ref." },
-        { id: "tides", name: "Tide times app", note: "Handy for the beach days — Bennar Beach (Tue), Mwnt (Thu), Caerfai (Fri). Check before swimming; low tide gives the widest sand." },
+        { id: "tides", name: "Tide times app", note: "Handy for the beach days — Bennar Beach (Tue), Mwnt (Thu), St Davids beaches (Fri). Check before swimming; low tide gives the widest sand." },
         { id: "maps", name: "Download offline Google Maps for Wales", note: "Big rural patches (Snowdonia, north Pembrokeshire, Brecon Beacons) have flaky phone signal — CarPlay won't help if Maps can't load. In the Google Maps app: Profile → Offline maps → Select your own map → drag the box to cover all of Wales + Shropshire. Do it on home WiFi (~500MB). OS Maps app is the alternative for walking routes." },
         { id: "cadw", name: "Cadw Explorer Pass (7-day family)", note: "~£44 family pass covers Conwy Castle (Day 2) + Harlech Castle (Day 5) + Bishop's Palace at St Davids (Day 7 if you fancy it). On-the-door price for Conwy + Harlech alone is ~£74, so the pass saves ~£30. Buy it at Conwy reception on Day 2." }
       ]
@@ -575,14 +575,14 @@ function PackingList() {
 
 function BookingsList() {
   const [bookings, setBookings] = useSharedState('bookings', {
-    james: false, zipworld: false, caerfai: false, newquayboats: false, mwnt: false, pencelli: false, royaloak: false,
-    cwellyn: false, erwglas: false, morfa: false, bennar: false, cornmill: false, conwy: false
+    james: false, zipworld: false, porthclais: true, newquayboats: false, mwnt: false, pencelli: false, royaloak: false,
+    cwellyn: false, erwglas: false, pengarreg: false, bennar: false, cornmill: false, conwy: false
   });
 
   const items = [
     { id: "james", name: "Pay James — £100 van extension", urgency: "high", date: "Before 1 Aug", note: "£50 early pickup (Sat 1 Aug) + £50 late return (Sun 9 Aug). Pay via Goboony." },
     { id: "zipworld", name: "Zip World Betws-y-Coed — Fforest Coaster", urgency: "critical", date: "Sun 2 Aug ~12:30", link: "https://www.zipworld.co.uk/adventure/fforest-coaster", note: "Whole family rides: Mason on your lap (3+ with adult), Harper & Mylo solo (9+). Book one slot for all 4 at once." },
-    { id: "caerfai", name: "Caerfai Bay, St Davids", urgency: "critical", date: "Fri 7 Aug", phone: "01437 720274", link: "http://caerfaibay.co.uk/", note: "Fills fastest of all campsites. Charcoal BBQs only, raised 2ft off grass — free BBQ stand loan from reception." },
+    { id: "porthclais", name: "Porthclais Farm, St Davids", urgency: "high", date: "Fri 7 Aug", phone: "07970 439310", link: "https://porthclaiscampsite.co.uk/", note: "CONFIRMED ✓ — single Friday night booked. No electric hook-up (off-grid night). Swapped in after Caerfai's 5-night August minimum ruled it out." },
     { id: "newquayboats", name: "New Quay Boat Trips — Dolphin Spotting", urgency: "critical", date: "Thu 6 Aug ~11:30", phone: "01545 560800", link: "https://www.newquayboattrips.co.uk/", note: "1-hour Ermol VI trip, £37.50 family of 4. August + dolphins = book ahead." },
     { id: "mwnt", name: "Tŷ Gwyn, Mwnt", urgency: "high", date: "Thu 6 Aug", phone: "01239 614518", link: "https://campingatmwnt.com/", note: "Small cliff-top site" },
     { id: "pencelli", name: "Pencelli Castle, Brecon", urgency: "high", date: "Sat 8 Aug", phone: "01874 665451", link: "http://www.pencelli-castle.com/", note: "Popular Beacons site" },
@@ -935,7 +935,7 @@ export default function App() {
                 <span className="inline-flex items-center gap-1.5"><span className="w-6 h-[2px]" style={{ background: "var(--rust)", borderTop: "1px dashed" }} />Drive</span>
               </div>
               <div className="mt-4 text-center">
-                <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CBennar+Beach+Dyffryn+Ardudwy+LL44+2RX%7CPengarreg+Caravan+Park+Llanrhystud+SY23+5DJ%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CCaerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
+                <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CBennar+Beach+Dyffryn+Ardudwy+LL44+2RX%7CPengarreg+Caravan+Park+Llanrhystud+SY23+5DJ%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CPorthclais+Farm+Campsite+SA62+6RR%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
                   <MapPin size={14} /> View full route in Google Maps
                 </a>
               </div>
