@@ -12,7 +12,8 @@
       "WebFetch(domain:www.bennar.co.uk)",
       "WebFetch(domain:pengarregcaravanpark.co.uk)",
       "Bash(npm run *)",
-      "WebFetch(domain:porthclaiscampsite.co.uk)"
+      "WebFetch(domain:porthclaiscampsite.co.uk)",
+      "WebFetch(domain:www.theroyaloakpencelli.com)"
     ]
   }
 }
