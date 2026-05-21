@@ -13,7 +13,14 @@
       "WebFetch(domain:pengarregcaravanpark.co.uk)",
       "Bash(npm run *)",
       "WebFetch(domain:porthclaiscampsite.co.uk)",
-      "WebFetch(domain:www.theroyaloakpencelli.com)"
+      "WebFetch(domain:www.theroyaloakpencelli.com)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(git config *)",
+      "Bash(git remote *)",
+      "Bash(git -c credential.https://github.com.helper= -c credential.helper=manager credential fill)",
+      "Bash(git credential *)",
+      "Bash(git fetch *)"
     ]
   }
 }
