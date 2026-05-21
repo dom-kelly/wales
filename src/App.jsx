@@ -1,6 +1,11 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { MapPin, Clock, Car, Bed, Utensils, Camera, Phone, ExternalLink, Check, X, Navigation, ChevronDown, ChevronRight, Calendar, Users, PoundSterling, AlertCircle, Mountain, Waves, Trees, Castle, Zap, ShoppingCart } from 'lucide-react';
-import { useSharedState } from './api.js';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { MapPin, Clock, Car, Bed, Utensils, Camera, Phone, ExternalLink, Check, X, Navigation, ChevronDown, ChevronRight, Calendar, Users, PoundSterling, AlertCircle, Mountain, Waves, Trees, Castle, Zap, ShoppingCart, Lock, Unlock } from 'lucide-react';
+import { useSharedState, usePhotos, useAuth } from './api.js';
+
+function isDriverMode() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('driver') === '1';
+}
 
 const TRIP = {
   title: "Wales 2026",
@@ -62,17 +67,17 @@ const DAYS = [
   },
   {
     num: 4, date: "Tue 4 Aug", weekday: "Tuesday",
-    title: "Cregennen → Shell Island",
-    blurb: "Ice cream in Wales' prettiest village, picnic by twin mountain lakes, then onto the dunes for a tidal-causeway campsite.",
+    title: "Cregennen → Bennar Beach",
+    blurb: "Ice cream in Wales' prettiest village, picnic by twin mountain lakes, then on to a dune-backed beach campsite on the Cambrian coast.",
     drive: { miles: 80, hrs: "2h 30m" },
-    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Snowdon+Base+Camp+Rhyd-Ddu+LL54+7YS&destination=Shell+Island+LL45+2PJ&waypoints=Beddgelert+LL55+4YE%7CTesco+Porthmadog+LL49+9DB%7CLlynnau+Cregennen+LL39+1LJ&travelmode=driving",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Snowdon+Base+Camp+Rhyd-Ddu+LL54+7YS&destination=Bennar+Beach+Dyffryn+Ardudwy+LL44+2RX&waypoints=Beddgelert+LL55+4YE%7CTesco+Porthmadog+LL49+9DB%7CLlynnau+Cregennen+LL39+1LJ&travelmode=driving",
     stops: [
       { time: "~09:20", type: "depart", name: "Depart Snowdon Base Camp", loc: "Rhyd-Ddu", notes: "10 min drive to Beddgelert." },
       { time: "~09:30", type: "sight", name: "Beddgelert", loc: "Snowdonia", notes: "Stone-built village at the confluence of two rivers, surrounded by mountains — often called the prettiest village in Wales. Quick stop for Glaslyn Ices (iconic family-run ice-cream parlour) and a leg-stretch by the bridge." },
-      { time: "~10:30", type: "shop", name: "Shop at Tesco Porthmadog", loc: "Porthmadog", notes: "Big shop for the next 2 days: picnic lunch for today, BBQ supplies for tonight (Shell Island) and tomorrow night (Morfa Bychan), plus milk + bacon for breakfasts. Direct on the A487, ~25 min stop." },
+      { time: "~10:30", type: "shop", name: "Shop at Tesco Porthmadog", loc: "Porthmadog", notes: "Big shop for the next 2 days: picnic lunch for today, BBQ supplies for tonight (Bennar Beach) and tomorrow night (Morfa Bychan), plus milk + bacon for breakfasts. Bennar has no on-site shop, so stock up properly here. Direct on the A487, ~25 min stop." },
       { time: "~11:30", type: "food", name: "Picnic at Llynnau Cregennen", loc: "near Dolgellau", notes: "Two small mountain lakes high on the southern flank of Cadair Idris, with views across the Mawddach estuary to Barmouth. National Trust land, picnic benches by the water. Single-track gated road in — slow approach in the van." },
-      { time: "~15:00", type: "stay", name: "Shell Island", loc: "Llanbedr · Night 4", notes: "Vast 300-acre coastal campsite on a tidal peninsula — pitch anywhere you like in the dunes (no marked plots), miles of beach on the doorstep. Famous for shell-collecting at low tide. On-site supermarket for top-ups. The access causeway floods at high tide — CHECK TIDE TIMES.", phone: "01341 241453", link: "http://www.shellisland.co.uk/", booking: "pitch" },
-      { time: "~19:00", type: "food", name: "Raised charcoal BBQ in the dunes", loc: "Shell Island", notes: "Cook in the dunes overlooking the sea. BBQ must be raised 2ft off the grass — site rule, strictly enforced. Watch the sunset over Cardigan Bay." }
+      { time: "~15:00", type: "stay", name: "Bennar Beach", loc: "Dyffryn Ardudwy · Night 4", notes: "Quiet all-grass beach campsite on the Cambrian coast, halfway between Barmouth and Harlech, with the Rhinog mountains behind. A wooden boardwalk leads straight through the dunes to a sandy beach (5–10 min walk). Generous 9×9m EHU pitches for the van. No on-site shop — chippy + pub at the neighbouring park, and an award-winning butcher at the village SPAR. No noise after 10pm.", phone: "01341 247001", link: "https://www.bennar.co.uk/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "Raised BBQ by the dunes", loc: "Bennar Beach", notes: "Off-ground fire pits / raised BBQs are allowed — cook at the pitch then carry chairs over the boardwalk for sunset on the beach. Dispose of ash in the metal bin in the refuse area (site rule)." }
     ]
   },
   {
@@ -80,9 +85,9 @@ const DAYS = [
     title: "Harlech → Cambrian coast",
     blurb: "Clifftop UNESCO castle, fish & chips at a Victorian seaside town, on to Aberystwyth.",
     drive: { miles: 65, hrs: "2h 30m" },
-    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Shell+Island+LL45+2PJ&destination=Morfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL&waypoints=Harlech+Castle+LL46+2YH%7CBarmouth+LL42+1NB&travelmode=driving",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Bennar+Beach+Dyffryn+Ardudwy+LL44+2RX&destination=Morfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL&waypoints=Harlech+Castle+LL46+2YH%7CBarmouth+LL42+1NB&travelmode=driving",
     stops: [
-      { time: "~09:45", type: "depart", name: "Depart Shell Island", loc: "Llanbedr", notes: "15 min drive to Harlech Castle — CHECK TIDE TIMES before crossing the causeway." },
+      { time: "~09:45", type: "depart", name: "Depart Bennar Beach", loc: "Dyffryn Ardudwy", notes: "~15 min drive north up the coast to Harlech Castle." },
       { time: "~10:00", type: "sight", name: "Harlech Castle", loc: "Harlech", notes: "Dramatic 13th-century cliff-top fortress built by Edward I — UNESCO World Heritage Site, perched on a 200ft rock with views across Tremadog Bay to Snowdonia. The site of the longest siege in British history. ~45min visit.", link: "https://cadw.gov.wales/visit/places-to-visit/harlech-castle" },
       { time: "~12:30", type: "food", name: "Fish & chips at Barmouth", loc: "Barmouth", notes: "Classic Welsh seaside town with a long sandy beach and a Victorian harbour. The Mermaid (high street) and Davy Jones' Locker (seafront) both serve traditional fish & chips. Eat on the prom watching the Mawddach estuary." },
       { time: "~17:00", type: "stay", name: "Morfa Bychan Holiday Park", loc: "Aberystwyth · Night 5", notes: "Clifftop holiday park 3 miles south of Aberystwyth with sweeping Cardigan Bay views from the touring pitches. Direct path down to a pebble cove. 4.7★. On-site shop for essentials. The 2-mile access road is narrow — take it slow in the van.", phone: "01970 617254", link: "https://www.hillandale.co.uk/our-parks/morfa-bychan-holiday-park", booking: "pitch" },
@@ -160,7 +165,7 @@ const OVERNIGHT_COORDS = [
   { day: 1, name: "Erw Glas", lat: 53.1981, lng: -3.8240 },
   { day: 2, name: "Snowdon BC", lat: 53.0545, lng: -4.1360 },
   { day: 3, name: "Snowdon BC", lat: 53.0545, lng: -4.1360 },
-  { day: 4, name: "Shell Is.", lat: 52.8191, lng: -4.1427 },
+  { day: 4, name: "Bennar Beach", lat: 52.7760, lng: -4.1190 },
   { day: 5, name: "Aberystwyth", lat: 52.3736, lng: -4.1082 },
   { day: 6, name: "Mwnt", lat: 52.1363, lng: -4.6342 },
   { day: 7, name: "Caerfai", lat: 51.8733, lng: -5.2583 },
@@ -191,7 +196,72 @@ function StatusBadge({ booked, urgency }) {
   return <span style={{ background: "var(--accent)", color: "var(--cream)" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">To book</span>;
 }
 
-function StopRow({ stop, isLast }) {
+function PhotoThumb({ photo, isDriver, onDelete, size = "h-24 w-24" }) {
+  const handleDelete = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const what = photo.caption ? `"${photo.caption}"` : 'this photo';
+    if (window.confirm(`Delete ${what}? This can't be undone.`)) {
+      onDelete?.(photo.id);
+    }
+  };
+  return (
+    <div className="relative">
+      <a href={`/api/photos/${photo.id}`} target="_blank" rel="noopener noreferrer" className="block">
+        <img src={`/api/photos/${photo.id}`} alt={photo.caption || ''} loading="lazy" className={`rounded ${size} object-cover border`} style={{ borderColor: "var(--line)" }} />
+      </a>
+      {isDriver && onDelete && (
+        <button
+          onClick={handleDelete}
+          aria-label="Delete photo"
+          className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center"
+          style={{ background: "rgba(31, 45, 39, 0.75)", color: "var(--cream)" }}
+        >
+          <X size={13} strokeWidth={2.5} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PhotoStrip({ photos, isDriver, onDelete }) {
+  if (!photos || !photos.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2 mt-3">
+      {photos.map(p => (
+        <div key={p.id} className="w-24">
+          <PhotoThumb photo={p} isDriver={isDriver} onDelete={onDelete} />
+          {p.caption && <p className="text-[10px] mt-1 truncate" style={{ color: "var(--slate)" }}>{p.caption}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PhotoUploadButton({ dayNum, stopIndex, upload, uploading }) {
+  const inputRef = useRef(null);
+  const handle = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const caption = window.prompt('Caption (optional)') || '';
+    try {
+      await upload(file, { dayNum, stopIndex, caption });
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+    }
+  };
+  return (
+    <>
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handle} />
+      <button onClick={() => inputRef.current?.click()} disabled={uploading} className="text-xs inline-flex items-center gap-1 hover:underline disabled:opacity-50" style={{ color: "var(--accent)" }}>
+        <Camera size={11} />{uploading ? 'Uploading…' : 'Add photo'}
+      </button>
+    </>
+  );
+}
+
+function StopRow({ stop, isLast, dayNum, stopIndex, photos, isDriver, upload, uploading, remove }) {
   const meta = STOP_META[stop.type];
   const Icon = meta.icon;
   return (
@@ -212,13 +282,15 @@ function StopRow({ stop, isLast }) {
           {stop.booking && <StatusBadge booked={false} urgency={BOOKING_META[stop.booking]?.urgency} />}
           {stop.phone && <a href={`tel:${stop.phone.replace(/\s/g, '')}`} className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><Phone size={11} />{stop.phone}</a>}
           {stop.link && <a href={stop.link} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><ExternalLink size={11} />Website</a>}
+          {isDriver && <PhotoUploadButton dayNum={dayNum} stopIndex={stopIndex} upload={upload} uploading={uploading} />}
         </div>
+        <PhotoStrip photos={photos} isDriver={isDriver} onDelete={remove} />
       </div>
     </div>
   );
 }
 
-function DayCard({ day, open, onToggle }) {
+function DayCard({ day, open, onToggle, photos, isDriver, upload, uploading, remove }) {
   const ref = useRef(null);
   const handleToggle = () => {
     const willOpen = !open;
@@ -259,7 +331,20 @@ function DayCard({ day, open, onToggle }) {
             </a>
           </div>
           <div className="ml-16">
-            {day.stops.map((s, i) => <StopRow key={i} stop={s} isLast={i === day.stops.length - 1} />)}
+            {day.stops.map((s, i) => (
+              <StopRow
+                key={i}
+                stop={s}
+                isLast={i === day.stops.length - 1}
+                dayNum={day.num}
+                stopIndex={i}
+                photos={photos?.filter(p => p.stopIndex === i)}
+                isDriver={isDriver}
+                upload={upload}
+                uploading={uploading}
+                remove={remove}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -323,7 +408,7 @@ function RouteMap() {
           const labelOffsets = {
             "Erw Glas": { x: 14, y: 4 },
             "Snowdon BC": { x: -8, y: 16 },
-            "Shell Is.": { x: -55, y: 4 },
+            "Bennar Beach": { x: -72, y: 4 },
             "Aberystwyth": { x: -70, y: 4 },
             "Mwnt": { x: -38, y: 4 },
             "Caerfai": { x: -48, y: 4 },
@@ -379,12 +464,13 @@ function PackingList() {
     {
       title: "BBQ & cooking",
       items: [
-        { id: "grill", name: "Borrow BBQ from Barry & George", note: "Must be raised 2ft off the grass — required at Shell Island, Morfa Bychan, Pencelli. Caerfai loans stands free from reception so doesn't matter there. Check the BBQ meets the height rule before loading." },
-        { id: "charcoal", name: "4 × Instant Light Charcoal Bags from The Range", note: "Single-use bags — just light the corner, no firelighters or arranging needed. One per BBQ night: Shell Island (Tue), Morfa Bychan (Wed), Mwnt (Thu), Caerfai (Fri). Saturday is pub dinner at the Royal Oak. NB Snowdon Base Camp Sun + Mon use their kiln-dried logs only (£7/bag at the pub), NOT charcoal." },
+        { id: "grill", name: "Borrow BBQ from Barry & George", note: "Must be raised off the grass — required at Bennar Beach, Morfa Bychan, Pencelli. Caerfai loans stands free from reception so doesn't matter there. Check the BBQ meets the height rule before loading." },
+        { id: "charcoal", name: "4 × Instant Light Charcoal Bags from The Range", note: "Single-use bags — just light the corner, no firelighters or arranging needed. One per BBQ night: Bennar Beach (Tue), Morfa Bychan (Wed), Mwnt (Thu), Caerfai (Fri). Saturday is pub dinner at the Royal Oak. NB Snowdon Base Camp Sun + Mon use their kiln-dried logs only (£7/bag at the pub), NOT charcoal." },
         { id: "firelighters", name: "Long matches or wind-proof lighter", note: "For lighting the instant-light bags and the kiln-dried logs at Snowdon Base Camp. Welsh evenings get breezy — wind-proof lighter is the reliable choice." },
         { id: "tongs", name: "Long-handled tongs + heatproof gloves", note: "Cooking over wood and embers — longer reach needed." },
         { id: "foil", name: "Heavy-duty foil + kitchen roll", note: "Foil-wrapped jacket potatoes in the embers = winner with kids." },
-        { id: "coolbox", name: "Cool box + ice packs", note: "Van has fridge but NO freezer. Cool box handy for keeping BBQ meat cold or holding overflow. Caerfai offers freeze-pack service for 20p." }
+        { id: "coolbox", name: "Cool box + ice packs", note: "Van has fridge but NO freezer. Cool box handy for keeping BBQ meat cold or holding overflow. Caerfai offers freeze-pack service for 20p." },
+        { id: "chairs", name: "4 × folding camp chairs", note: "One each for evenings at the pitch and BBQ nights. Light enough to carry over the boardwalk at Bennar Beach for the ~9pm sunset over Cardigan Bay." }
       ]
     },
     {
@@ -408,7 +494,7 @@ function PackingList() {
     {
       title: "Beach & swim",
       items: [
-        { id: "swimwear", name: "Swimwear × 4 + rash vests for kids", note: "3 prime beach days: Shell Island (Tue), Mwnt (Thu), Caerfai (Fri). Welsh sea is cold — rash vests extend beach time for Mason + Harper." },
+        { id: "swimwear", name: "Swimwear × 4 + rash vests for kids", note: "3 prime beach days: Bennar Beach (Tue), Mwnt (Thu), Caerfai (Fri). Welsh sea is cold — rash vests extend beach time for Mason + Harper." },
         { id: "towels", name: "Beach towels × 4", note: "Separate from the bath/shower towels — beach use means sand and salt water. Quick-dry microfibre saves van space." },
         { id: "sun", name: "Factor 50 sun cream + after-sun", note: "Welsh sun is sneaky — kids burn on overcast days." }
       ]
@@ -429,7 +515,7 @@ function PackingList() {
         { id: "goboony", name: "Goboony booking confirmation + van docs", note: "Print + on phone. James needs to provide V5 / insurance / breakdown details at handover." },
         { id: "zipworld-conf", name: "Zip World booking confirmation", note: "Print + on phone for the morning of Sun 2 Aug." },
         { id: "campsite-confs", name: "All campsite confirmations", note: "Some sites are phone-only — write down the booking ref." },
-        { id: "tides", name: "Tide times app", note: "Critical for Shell Island Day 4 — causeway floods." },
+        { id: "tides", name: "Tide times app", note: "Handy for the beach days — Bennar Beach (Tue), Mwnt (Thu), Caerfai (Fri). Check before swimming; low tide gives the widest sand." },
         { id: "maps", name: "Download offline Google Maps for Wales", note: "Big rural patches (Snowdonia, north Pembrokeshire, Brecon Beacons) have flaky phone signal — CarPlay won't help if Maps can't load. In the Google Maps app: Profile → Offline maps → Select your own map → drag the box to cover all of Wales + Shropshire. Do it on home WiFi (~500MB). OS Maps app is the alternative for walking routes." },
         { id: "cadw", name: "Cadw Explorer Pass (7-day family)", note: "~£44 family pass covers Conwy Castle (Day 2) + Harlech Castle (Day 5) + Bishop's Palace at St Davids (Day 7 if you fancy it). On-the-door price for Conwy + Harlech alone is ~£74, so the pass saves ~£30. Buy it at Conwy reception on Day 2." }
       ]
@@ -490,7 +576,7 @@ function PackingList() {
 function BookingsList() {
   const [bookings, setBookings] = useSharedState('bookings', {
     james: false, zipworld: false, caerfai: false, newquayboats: false, mwnt: false, pencelli: false, royaloak: false,
-    cwellyn: false, erwglas: false, morfa: false, shell: false, cornmill: false, conwy: false
+    cwellyn: false, erwglas: false, morfa: false, bennar: false, cornmill: false, conwy: false
   });
 
   const items = [
@@ -504,7 +590,7 @@ function BookingsList() {
     { id: "cwellyn", name: "Snowdon Base Camp, Rhyd-Ddu (2 nights)", urgency: "high", date: "Sun 2 + Mon 3 Aug", phone: "01766 890321", link: "http://www.snowdoninn.co.uk/", note: "Phone-only via Cwellyn Arms pub (same owner). Specifically ask for one of the 3 EHU campervan bays — only 3 available." },
     { id: "erwglas", name: "Erw Glas, Maenan", urgency: "high", date: "Sat 1 Aug", phone: "01492 702486", link: "https://www.erwglasglampingandcamping.co.uk/", note: "Book a hard-standing pitch with EHU. Pre-order takeaway pizza for Sat night + breakfast hamper for Sun morning." },
     { id: "morfa", name: "Morfa Bychan, Aberystwyth", urgency: "high", date: "Wed 5 Aug", phone: "01970 617254", link: "https://www.hillandale.co.uk/our-parks/morfa-bychan-holiday-park" },
-    { id: "shell", name: "Shell Island, Llanbedr", urgency: "low", date: "Tue 4 Aug", phone: "01341 241453", link: "http://www.shellisland.co.uk/", note: "Turn-up site, but worth a call" },
+    { id: "bennar", name: "Bennar Beach, Dyffryn Ardudwy", urgency: "high", date: "Tue 4 Aug", phone: "01341 247001", link: "https://www.bennar.co.uk/", note: "Book a grass EHU pitch — single peak-August nights are scarce here, so call to confirm. Dune boardwalk to the beach; no on-site shop." },
     { id: "cornmill", name: "The Corn Mill, Llangollen — lunch table", urgency: "low", date: "Sat 1 Aug ~13:00", link: "https://www.cornmill-llangollen.co.uk/", note: "Terrace table over the river. Book ahead — Saturday August lunch fills up." },
     { id: "conwy", name: "Conwy Castle / Cadw Explorer Pass", urgency: "low", date: "Sun 2 Aug", link: "https://cadw.gov.wales/visit/places-to-visit/conwy-castle", note: "Buy the 7-day Explorer Pass at Conwy reception on the day — covers Conwy + Harlech + Bishop's Palace for the whole trip." }
   ];
@@ -548,8 +634,248 @@ function BookingsList() {
   );
 }
 
+function BottomNav({ active, onChange, isDriver }) {
+  const tabs = [
+    { id: 'route', label: 'Route', icon: Navigation },
+    { id: 'bookings', label: 'Bookings', icon: Calendar },
+    { id: 'todo', label: 'To do', icon: Check },
+    { id: 'photos', label: isDriver ? 'Add photo' : 'Photos', icon: Camera },
+  ];
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur" style={{ background: "rgba(245, 239, 224, 0.92)", borderColor: "var(--line)", paddingBottom: "env(safe-area-inset-bottom, 0)" }}>
+      <div className="max-w-2xl mx-auto flex">
+        {tabs.map(t => {
+          const Icon = t.icon;
+          const isActive = active === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => onChange(t.id)}
+              className="flex-1 flex flex-col items-center py-2.5 transition-colors"
+              style={{ color: isActive ? "var(--rust)" : "var(--slate)" }}
+            >
+              <Icon size={22} strokeWidth={isActive ? 2.4 : 1.8} />
+              <span className="text-[10px] mt-1 uppercase tracking-wider font-semibold">{t.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+// Trip runs 1–9 Aug 2026. Day N = Aug N.
+const TRIP_YEAR = 2026;
+const TRIP_MONTH_IDX = 7; // August (0-indexed)
+
+function dayNumFromToday(now = new Date()) {
+  if (now.getFullYear() !== TRIP_YEAR || now.getMonth() !== TRIP_MONTH_IDX) return null;
+  const d = now.getDate();
+  return d >= 1 && d <= 9 ? d : null;
+}
+
+function distanceKm(a, b) {
+  const toRad = x => x * Math.PI / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function nearestOvernight(loc, thresholdKm = 60) {
+  let best = null;
+  for (const o of OVERNIGHT_COORDS) {
+    const d = distanceKm(loc, o);
+    if (d < thresholdKm && (!best || d < best.d)) best = { ...o, d };
+  }
+  return best;
+}
+
+function PasswordPanel({ hasPassword, setPassword }) {
+  const handleSet = () => {
+    const pw = window.prompt(hasPassword ? 'Enter new password (leave blank to clear)' : 'Driver password');
+    if (pw === null) return;
+    setPassword(pw.trim());
+  };
+  return (
+    <div className="mb-6 p-3 rounded-lg flex items-center justify-between gap-3" style={{ background: hasPassword ? "var(--stone)" : "rgba(185, 84, 47, 0.12)", border: "1px solid var(--line)" }}>
+      <div className="flex items-center gap-2 min-w-0">
+        {hasPassword
+          ? <Unlock size={14} style={{ color: "var(--green)" }} />
+          : <Lock size={14} style={{ color: "var(--rust)" }} />}
+        <div className="min-w-0">
+          <p className="text-xs font-medium" style={{ color: "var(--ink)" }}>
+            {hasPassword ? 'Unlocked · uploads + delete enabled' : 'Set a driver password to upload or delete'}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={handleSet}
+        className="text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0"
+        style={{ background: "var(--ink)", color: "var(--cream)" }}
+      >
+        {hasPassword ? 'Change' : 'Set'}
+      </button>
+    </div>
+  );
+}
+
+function PhotoTab({ photos, upload, uploading, isDriver, remove, hasPassword, setPassword }) {
+  const [dayNum, setDayNum] = useState(1);
+  const [autoHint, setAutoHint] = useState(null);
+  const [coords, setCoords] = useState(null);
+  const userPicked = useRef(false);
+  const inputRef = useRef(null);
+
+  // Date-based inference on mount (no permission needed)
+  useEffect(() => {
+    const fromDate = dayNumFromToday();
+    if (fromDate && !userPicked.current) {
+      setDayNum(fromDate);
+      setAutoHint(`Today is Day ${fromDate}`);
+    }
+  }, []);
+
+  // Location-based inference, non-blocking
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCoords(loc);
+        const nearest = nearestOvernight(loc);
+        const fromDate = dayNumFromToday();
+        if (nearest && !userPicked.current) {
+          if (!fromDate) {
+            setDayNum(nearest.day);
+            setAutoHint(`Near ${nearest.name} · Day ${nearest.day}`);
+          } else if (fromDate === nearest.day) {
+            setAutoHint(`Today is Day ${fromDate} · near ${nearest.name}`);
+          } else {
+            setAutoHint(`Today is Day ${fromDate} (you're closer to Day ${nearest.day}'s ${nearest.name})`);
+          }
+        }
+      },
+      () => { /* user denied or timed out — keep date default */ },
+      { enableHighAccuracy: false, maximumAge: 5 * 60 * 1000, timeout: 8000 }
+    );
+  }, []);
+
+  const handleDayChange = (e) => {
+    userPicked.current = true;
+    setAutoHint(null);
+    setDayNum(parseInt(e.target.value, 10));
+  };
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const caption = window.prompt('Caption (optional)') || '';
+    try {
+      await upload(file, {
+        dayNum,
+        stopIndex: null,
+        caption,
+        ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+      });
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+    }
+  };
+  return (
+    <div>
+      <h2 className="font-serif text-2xl md:text-3xl mb-5" style={{ color: "var(--ink)" }}>
+        {isDriver ? 'Add a photo' : 'Journey log'}
+      </h2>
+      {isDriver && <PasswordPanel hasPassword={hasPassword} setPassword={setPassword} />}
+      {isDriver && (
+        <div className="mb-8 p-4 rounded-lg" style={{ background: "var(--stone)", border: "1px solid var(--line)" }}>
+          <label className="block text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--slate)" }}>Assign to day</label>
+          <select
+            value={dayNum}
+            onChange={handleDayChange}
+            className="w-full p-2.5 rounded-md text-sm"
+            style={{ background: "var(--cream)", border: "1px solid var(--line)", color: "var(--ink)" }}
+          >
+            {DAYS.map(d => <option key={d.num} value={d.num}>Day {d.num} · {d.date} · {d.title}</option>)}
+          </select>
+          {autoHint && (
+            <p className="text-[11px] mt-1.5 mb-3 italic" style={{ color: "var(--slate)" }}>
+              Auto: {autoHint}
+            </p>
+          )}
+          {!autoHint && <div className="mb-3" />}
+          <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleUpload} />
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="w-full py-3.5 rounded-md font-medium text-sm inline-flex items-center justify-center gap-2 disabled:opacity-60"
+            style={{ background: "var(--ink)", color: "var(--cream)" }}
+          >
+            <Camera size={16} />
+            {uploading ? 'Uploading…' : 'Take or choose a photo'}
+          </button>
+        </div>
+      )}
+      {photos.length > 0 && (
+        <h3 className="font-serif text-lg mb-4 pb-1.5 border-b" style={{ color: "var(--ink)", borderColor: "var(--line)" }}>
+          {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
+        </h3>
+      )}
+      <Gallery photos={photos} isDriver={isDriver} onDelete={remove} />
+    </div>
+  );
+}
+
+function Gallery({ photos, isDriver, onDelete }) {
+  if (!photos.length) {
+    return (
+      <p className="text-sm italic" style={{ color: "var(--slate)" }}>
+        No photos yet — they'll appear here once the trip starts.
+      </p>
+    );
+  }
+  const byDay = photos.reduce((acc, p) => {
+    (acc[p.dayNum] = acc[p.dayNum] || []).push(p);
+    return acc;
+  }, {});
+  const dayNums = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  return (
+    <>
+      {dayNums.map(d => {
+        const dayMeta = DAYS.find(x => x.num === d);
+        return (
+          <div key={d} className="mb-7">
+            <h3 className="font-serif text-lg mb-3 pb-1.5 border-b" style={{ color: "var(--ink)", borderColor: "var(--line)" }}>
+              Day {d}{dayMeta ? ` · ${dayMeta.title}` : ''}
+            </h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {byDay[d].sort((a, b) => a.takenAt - b.takenAt).map(p => (
+                <div key={p.id}>
+                  <PhotoThumb photo={p} isDriver={isDriver} onDelete={onDelete} size="w-full aspect-square" />
+                  {p.caption && <p className="text-[10px] mt-1 leading-tight" style={{ color: "var(--slate)" }}>{p.caption}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export default function App() {
   const [openDay, setOpenDay] = useState(1);
+  const [isDriver] = useState(isDriverMode);
+  const { photos, upload, uploading, remove } = usePhotos();
+  const { hasPassword, setPassword } = useAuth();
+  const [tab, setTab] = useState('route');
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [tab]);
 
   return (
     <div className="min-h-screen" style={{
@@ -565,93 +891,90 @@ export default function App() {
       fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
       color: "var(--ink)"
     }}>
-      <div className="max-w-2xl mx-auto px-5 py-8 md:py-12">
+      <div className="max-w-2xl mx-auto px-5 pt-8 md:pt-12 pb-28">
 
-        {/* Header */}
-        <header className="mb-8">
-          <p className="text-xs uppercase tracking-[0.3em] font-medium mb-3" style={{ color: "var(--rust)" }}>{TRIP.dates}</p>
-          <h1 className="font-serif text-5xl md:text-7xl leading-[0.95] mb-3" style={{ color: "var(--ink)" }}>
-            {TRIP.title}
-          </h1>
-          <p className="font-serif italic text-lg md:text-xl leading-snug mb-6" style={{ color: "var(--slate)" }}>
-            {TRIP.subtitle}
-          </p>
+        {tab === 'route' && (
+          <>
+            <header className="mb-8">
+              <p className="text-xs uppercase tracking-[0.3em] font-medium mb-3" style={{ color: "var(--rust)" }}>{TRIP.dates}</p>
+              <h1 className="font-serif text-5xl md:text-7xl leading-[0.95] mb-3" style={{ color: "var(--ink)" }}>
+                {TRIP.title}
+              </h1>
+              <p className="font-serif italic text-lg md:text-xl leading-snug mb-6" style={{ color: "var(--slate)" }}>
+                {TRIP.subtitle}
+              </p>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pb-6 border-b" style={{ borderColor: "var(--line)" }}>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Vehicle</p>
-              <p style={{ color: "var(--ink)" }}>{TRIP.vehicle}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Party</p>
-              <p style={{ color: "var(--ink)" }}>{TRIP.party}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Nights</p>
-              <p style={{ color: "var(--ink)" }}>8 in the van</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Driving</p>
-              <p style={{ color: "var(--ink)" }}>{TRIP.totalMiles} mi · {TRIP.totalDrivingHrs}</p>
-            </div>
-          </div>
-        </header>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pb-6 border-b" style={{ borderColor: "var(--line)" }}>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Vehicle</p>
+                  <p style={{ color: "var(--ink)" }}>{TRIP.vehicle}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Party</p>
+                  <p style={{ color: "var(--ink)" }}>{TRIP.party}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Nights</p>
+                  <p style={{ color: "var(--ink)" }}>8 in the van</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--slate)" }}>Driving</p>
+                  <p style={{ color: "var(--ink)" }}>{TRIP.totalMiles} mi · {TRIP.totalDrivingHrs}</p>
+                </div>
+              </div>
+            </header>
 
-        {/* Map */}
-        <section className="mb-10">
-          <div className="flex items-baseline justify-between mb-4">
-            <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>The route</h2>
-            <span className="text-xs uppercase tracking-widest" style={{ color: "var(--slate)" }}>Numbered by night</span>
-          </div>
-          <RouteMap />
-          <div className="mt-3 flex items-center justify-center gap-4 text-xs flex-wrap" style={{ color: "var(--slate)" }}>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "var(--ink)" }} />Overnight</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-6 h-[2px]" style={{ background: "var(--rust)", borderTop: "1px dashed" }} />Drive</span>
-          </div>
-          <div className="mt-4 text-center">
-            <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CShell+Island+LL45+2PJ%7CMorfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CCaerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
-              <MapPin size={14} /> View full route in Google Maps
-            </a>
-          </div>
-        </section>
+            <section className="mb-10">
+              <div className="flex items-baseline justify-between mb-4">
+                <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>The route</h2>
+                <span className="text-xs uppercase tracking-widest" style={{ color: "var(--slate)" }}>Numbered by night</span>
+              </div>
+              <RouteMap />
+              <div className="mt-3 flex items-center justify-center gap-4 text-xs flex-wrap" style={{ color: "var(--slate)" }}>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "var(--ink)" }} />Overnight</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-6 h-[2px]" style={{ background: "var(--rust)", borderTop: "1px dashed" }} />Drive</span>
+              </div>
+              <div className="mt-4 text-center">
+                <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CBennar+Beach+Dyffryn+Ardudwy+LL44+2RX%7CMorfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CCaerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
+                  <MapPin size={14} /> View full route in Google Maps
+                </a>
+              </div>
+            </section>
 
-        {/* Days */}
-        <section className="mb-12">
-          <div className="flex items-baseline justify-between mb-2">
-            <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>Day by day</h2>
-            <button onClick={() => setOpenDay(openDay === 'all' ? null : 'all')} className="text-xs uppercase tracking-widest hover:underline" style={{ color: "var(--accent)" }}>
-              {openDay === 'all' ? 'Collapse all' : 'Expand all'}
-            </button>
-          </div>
-          <div>
-            {DAYS.map(day => (
-              <DayCard
-                key={day.num}
-                day={day}
-                open={openDay === 'all' || openDay === day.num}
-                onToggle={() => setOpenDay(openDay === day.num ? null : day.num)}
-              />
-            ))}
-          </div>
-        </section>
+            <section className="mb-4">
+              <div className="flex items-baseline justify-between mb-2">
+                <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>Day by day</h2>
+                <button onClick={() => setOpenDay(openDay === 'all' ? null : 'all')} className="text-xs uppercase tracking-widest hover:underline" style={{ color: "var(--accent)" }}>
+                  {openDay === 'all' ? 'Collapse all' : 'Expand all'}
+                </button>
+              </div>
+              <div>
+                {DAYS.map(day => (
+                  <DayCard
+                    key={day.num}
+                    day={day}
+                    open={openDay === 'all' || openDay === day.num}
+                    onToggle={() => setOpenDay(openDay === day.num ? null : day.num)}
+                    photos={photos.filter(p => p.dayNum === day.num)}
+                    isDriver={isDriver}
+                    upload={upload}
+                    uploading={uploading}
+                    remove={remove}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
-        {/* Packing */}
-        <section className="mb-12 pt-8 border-t" style={{ borderColor: "var(--line)" }}>
-          <PackingList />
-        </section>
+        {tab === 'bookings' && <BookingsList />}
 
-        {/* Bookings */}
-        <section className="mb-12 pt-8 border-t" style={{ borderColor: "var(--line)" }}>
-          <BookingsList />
-        </section>
+        {tab === 'todo' && <PackingList />}
 
-        {/* Footer */}
-        <footer className="text-center pt-6 border-t" style={{ borderColor: "var(--line)" }}>
-          <p className="font-serif italic text-sm" style={{ color: "var(--slate)" }}>
-            Iechyd da · Safe travels
-          </p>
-        </footer>
+        {tab === 'photos' && <PhotoTab photos={photos} upload={upload} uploading={uploading} isDriver={isDriver} remove={remove} hasPassword={hasPassword} setPassword={setPassword} />}
       </div>
+
+      <BottomNav active={tab} onChange={setTab} isDriver={isDriver} />
     </div>
   );
 }

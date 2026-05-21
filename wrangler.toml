@@ -7,3 +7,11 @@ pages_build_output_dir = "dist"
 [[kv_namespaces]]
 binding = "TRIP_STATE"
 id = "2ec4ae9dd8454f53b62022aeb9db1353"
+
+# R2 bucket for trip photos. Create the prod bucket once:
+#   npx wrangler r2 bucket create wales-photos
+# The local miniflare emulator creates its own bucket on first upload (data in .wrangler/state).
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "wales-photos"
+preview_bucket_name = "wales-photos"
