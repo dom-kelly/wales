@@ -74,7 +74,7 @@ const DAYS = [
     stops: [
       { time: "~09:20", type: "depart", name: "Depart Snowdon Base Camp", loc: "Rhyd-Ddu", notes: "10 min drive to Beddgelert." },
       { time: "~09:30", type: "sight", name: "Beddgelert", loc: "Snowdonia", notes: "Stone-built village at the confluence of two rivers, surrounded by mountains — often called the prettiest village in Wales. Quick stop for Glaslyn Ices (iconic family-run ice-cream parlour) and a leg-stretch by the bridge." },
-      { time: "~10:30", type: "shop", name: "Shop at Tesco Porthmadog", loc: "Porthmadog", notes: "Big shop for the next 2 days: picnic lunch for today, BBQ supplies for tonight (Bennar Beach) and tomorrow night (Morfa Bychan), plus milk + bacon for breakfasts. Bennar has no on-site shop, so stock up properly here. Direct on the A487, ~25 min stop." },
+      { time: "~10:30", type: "shop", name: "Shop at Tesco Porthmadog", loc: "Porthmadog", notes: "Big shop for the next 2 days: picnic lunch for today, BBQ supplies for tonight (Bennar Beach) and tomorrow night (Llanrhystud), plus milk + bacon for breakfasts. Bennar has no on-site shop, so stock up properly here. Direct on the A487, ~25 min stop." },
       { time: "~11:30", type: "food", name: "Picnic at Llynnau Cregennen", loc: "near Dolgellau", notes: "Two small mountain lakes high on the southern flank of Cadair Idris, with views across the Mawddach estuary to Barmouth. National Trust land, picnic benches by the water. Single-track gated road in — slow approach in the van." },
       { time: "~15:00", type: "stay", name: "Bennar Beach", loc: "Dyffryn Ardudwy · Night 4", notes: "Quiet all-grass beach campsite on the Cambrian coast, halfway between Barmouth and Harlech, with the Rhinog mountains behind. A wooden boardwalk leads straight through the dunes to a sandy beach (5–10 min walk). Generous 9×9m EHU pitches for the van. No on-site shop — chippy + pub at the neighbouring park, and an award-winning butcher at the village SPAR. No noise after 10pm.", phone: "01341 247001", link: "https://www.bennar.co.uk/", booking: "pitch" },
       { time: "~19:00", type: "food", name: "Raised BBQ by the dunes", loc: "Bennar Beach", notes: "Off-ground fire pits / raised BBQs are allowed — cook at the pitch then carry chairs over the boardwalk for sunset on the beach. Dispose of ash in the metal bin in the refuse area (site rule)." }
@@ -83,25 +83,25 @@ const DAYS = [
   {
     num: 5, date: "Wed 5 Aug", weekday: "Wednesday",
     title: "Harlech → Cambrian coast",
-    blurb: "Clifftop UNESCO castle, fish & chips at a Victorian seaside town, on to Aberystwyth.",
-    drive: { miles: 65, hrs: "2h 30m" },
-    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Bennar+Beach+Dyffryn+Ardudwy+LL44+2RX&destination=Morfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL&waypoints=Harlech+Castle+LL46+2YH%7CBarmouth+LL42+1NB&travelmode=driving",
+    blurb: "Clifftop UNESCO castle, fish & chips at a Victorian seaside town, on to the Cambrian coast at Llanrhystud.",
+    drive: { miles: 73, hrs: "2h 45m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Bennar+Beach+Dyffryn+Ardudwy+LL44+2RX&destination=Pengarreg+Caravan+Park+Llanrhystud+SY23+5DJ&waypoints=Harlech+Castle+LL46+2YH%7CBarmouth+LL42+1NB&travelmode=driving",
     stops: [
       { time: "~09:45", type: "depart", name: "Depart Bennar Beach", loc: "Dyffryn Ardudwy", notes: "~15 min drive north up the coast to Harlech Castle." },
       { time: "~10:00", type: "sight", name: "Harlech Castle", loc: "Harlech", notes: "Dramatic 13th-century cliff-top fortress built by Edward I — UNESCO World Heritage Site, perched on a 200ft rock with views across Tremadog Bay to Snowdonia. The site of the longest siege in British history. ~45min visit.", link: "https://cadw.gov.wales/visit/places-to-visit/harlech-castle" },
       { time: "~12:30", type: "food", name: "Fish & chips at Barmouth", loc: "Barmouth", notes: "Classic Welsh seaside town with a long sandy beach and a Victorian harbour. The Mermaid (high street) and Davy Jones' Locker (seafront) both serve traditional fish & chips. Eat on the prom watching the Mawddach estuary." },
-      { time: "~17:00", type: "stay", name: "Morfa Bychan Holiday Park", loc: "Aberystwyth · Night 5", notes: "Clifftop holiday park 3 miles south of Aberystwyth with sweeping Cardigan Bay views from the touring pitches. Direct path down to a pebble cove. 4.7★. On-site shop for essentials. The 2-mile access road is narrow — take it slow in the van.", phone: "01970 617254", link: "https://www.hillandale.co.uk/our-parks/morfa-bychan-holiday-park", booking: "pitch" },
-      { time: "~19:00", type: "food", name: "Raised BBQ with sea views", loc: "Morfa Bychan", notes: "Cook from yesterday's Tesco Porthmadog shop. BBQ must be raised off the grass — no fire pits allowed here. Sunset over Cardigan Bay." }
+      { time: "~17:00", type: "stay", name: "Pengarreg Caravan Park", loc: "Llanrhystud · Night 5", notes: "Family-run park perched right on the coastline 9 miles south of Aberystwyth, with sweeping Cardigan Bay views and seafront touring pitches. A mile of coastline with direct beach access, plus The Barn restaurant on site (dog-friendly). Just off the A487 in Llanrhystud village.", phone: "01974 202247", link: "https://pengarregcaravanpark.co.uk/", booking: "pitch" },
+      { time: "~19:00", type: "food", name: "BBQ with sea views", loc: "Llanrhystud", notes: "Cook from yesterday's Tesco Porthmadog shop. BBQs are allowed at Pengarreg — use the borrowed stand to keep it off the grass anyway. West-facing seafront pitch, so sunset straight over Cardigan Bay." }
     ]
   },
   {
     num: 6, date: "Thu 6 Aug", weekday: "Thursday",
     title: "Cardigan Bay",
     blurb: "Short hop south. Dolphin spotting at New Quay, then a cliff-top campsite above one of Wales' prettiest small beaches.",
-    drive: { miles: 40, hrs: "1h 30m" },
-    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Morfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL&destination=Ty+Gwyn+Caravan+and+Camping+Park+SA43+1QH&waypoints=Costcutter+Aberaeron+SA46+0AS%7CNew+Quay+SA45&travelmode=driving",
+    drive: { miles: 31, hrs: "1h 15m" },
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&origin=Pengarreg+Caravan+Park+Llanrhystud+SY23+5DJ&destination=Ty+Gwyn+Caravan+and+Camping+Park+SA43+1QH&waypoints=Costcutter+Aberaeron+SA46+0AS%7CNew+Quay+SA45&travelmode=driving",
     stops: [
-      { time: "~09:10", type: "depart", name: "Depart Morfa Bychan", loc: "Aberystwyth", notes: "50 min drive to Aberaeron — take the narrow 2-mile access road slowly." },
+      { time: "~09:10", type: "depart", name: "Depart Pengarreg", loc: "Llanrhystud", notes: "~30 min drive south down the A487 to Aberaeron." },
       { time: "~10:00", type: "shop", name: "Shop at Costcutter Aberaeron", loc: "Aberaeron", notes: "Mid-trip top-up shop, on route. Surprisingly well-stocked for a small-town shop — locals rate it. Buy for the next 2 nights of BBQ (Tŷ Gwyn Mwnt tonight, Caerfai tomorrow), plus milk + bacon for breakfasts. Pretty Georgian harbour town if you want to wander after." },
       { time: "11:00", type: "sight", name: "Arrive New Quay", loc: "Ceredigion", notes: "Pretty fishing village on Cardigan Bay with brightly painted houses tumbling down the hill to a curved harbour. Park up and walk to the Main Pier for the boat trip." },
       { time: "11:30", type: "activity", name: "Dolphin-spotting boat trip", loc: "New Quay Main Pier", notes: "1-hour cruise with New Quay Boat Trips (Ermol VI) into the Cardigan Bay Special Area of Conservation — resident bottlenose dolphin pod, Atlantic grey seals, sea birds. £15 adult / £7.50 child (~£37.50 family of 4). PRE-BOOK — August trips sell out. Use the loo before boarding (no toilet on the 1-hour boats). Wrap up — windy at sea.", phone: "01545 560800", link: "https://www.newquayboattrips.co.uk/", booking: "urgent" },
@@ -166,7 +166,7 @@ const OVERNIGHT_COORDS = [
   { day: 2, name: "Snowdon BC", lat: 53.0545, lng: -4.1360 },
   { day: 3, name: "Snowdon BC", lat: 53.0545, lng: -4.1360 },
   { day: 4, name: "Bennar Beach", lat: 52.7760, lng: -4.1190 },
-  { day: 5, name: "Aberystwyth", lat: 52.3736, lng: -4.1082 },
+  { day: 5, name: "Llanrhystud", lat: 52.2975, lng: -4.1665 },
   { day: 6, name: "Mwnt", lat: 52.1363, lng: -4.6342 },
   { day: 7, name: "Caerfai", lat: 51.8733, lng: -5.2583 },
   { day: 8, name: "Pencelli", lat: 51.9148, lng: -3.3179 }
@@ -409,7 +409,7 @@ function RouteMap() {
             "Erw Glas": { x: 14, y: 4 },
             "Snowdon BC": { x: -8, y: 16 },
             "Bennar Beach": { x: -72, y: 4 },
-            "Aberystwyth": { x: -70, y: 4 },
+            "Llanrhystud": { x: -74, y: 4 },
             "Mwnt": { x: -38, y: 4 },
             "Caerfai": { x: -48, y: 4 },
             "Pencelli": { x: 12, y: 4 }
@@ -464,8 +464,8 @@ function PackingList() {
     {
       title: "BBQ & cooking",
       items: [
-        { id: "grill", name: "Borrow BBQ from Barry & George", note: "Must be raised off the grass — required at Bennar Beach, Morfa Bychan, Pencelli. Caerfai loans stands free from reception so doesn't matter there. Check the BBQ meets the height rule before loading." },
-        { id: "charcoal", name: "4 × Instant Light Charcoal Bags from The Range", note: "Single-use bags — just light the corner, no firelighters or arranging needed. One per BBQ night: Bennar Beach (Tue), Morfa Bychan (Wed), Mwnt (Thu), Caerfai (Fri). Saturday is pub dinner at the Royal Oak. NB Snowdon Base Camp Sun + Mon use their kiln-dried logs only (£7/bag at the pub), NOT charcoal." },
+        { id: "grill", name: "Borrow BBQ from Barry & George", note: "Must be raised off the grass — required at Bennar Beach, Llanrhystud, Pencelli. Caerfai loans stands free from reception so doesn't matter there. Check the BBQ meets the height rule before loading." },
+        { id: "charcoal", name: "4 × Instant Light Charcoal Bags from The Range", note: "Single-use bags — just light the corner, no firelighters or arranging needed. One per BBQ night: Bennar Beach (Tue), Llanrhystud (Wed), Mwnt (Thu), Caerfai (Fri). Saturday is pub dinner at the Royal Oak. NB Snowdon Base Camp Sun + Mon use their kiln-dried logs only (£7/bag at the pub), NOT charcoal." },
         { id: "firelighters", name: "Long matches or wind-proof lighter", note: "For lighting the instant-light bags and the kiln-dried logs at Snowdon Base Camp. Welsh evenings get breezy — wind-proof lighter is the reliable choice." },
         { id: "tongs", name: "Long-handled tongs + heatproof gloves", note: "Cooking over wood and embers — longer reach needed." },
         { id: "foil", name: "Heavy-duty foil + kitchen roll", note: "Foil-wrapped jacket potatoes in the embers = winner with kids." },
@@ -589,7 +589,7 @@ function BookingsList() {
     { id: "royaloak", name: "Royal Oak Inn, Pencelli — last-night dinner", urgency: "high", date: "Sat 8 Aug ~19:00", phone: "01874 665396", link: "https://www.theroyaloakpencelli.com/", note: "100m walk from the campsite. Kitchen stops at 8pm — aim for 7pm. Saturday August will be busy, book a table for 4." },
     { id: "cwellyn", name: "Snowdon Base Camp, Rhyd-Ddu (2 nights)", urgency: "high", date: "Sun 2 + Mon 3 Aug", phone: "01766 890321", link: "http://www.snowdoninn.co.uk/", note: "Phone-only via Cwellyn Arms pub (same owner). Specifically ask for one of the 3 EHU campervan bays — only 3 available." },
     { id: "erwglas", name: "Erw Glas, Maenan", urgency: "high", date: "Sat 1 Aug", phone: "01492 702486", link: "https://www.erwglasglampingandcamping.co.uk/", note: "Book a hard-standing pitch with EHU. Pre-order takeaway pizza for Sat night + breakfast hamper for Sun morning." },
-    { id: "morfa", name: "Morfa Bychan, Aberystwyth", urgency: "high", date: "Wed 5 Aug", phone: "01970 617254", link: "https://www.hillandale.co.uk/our-parks/morfa-bychan-holiday-park" },
+    { id: "pengarreg", name: "Pengarreg, Llanrhystud", urgency: "high", date: "Wed 5 Aug", phone: "01974 202247", link: "https://pengarregcaravanpark.co.uk/", note: "Has availability — book a seafront touring pitch with EHU." },
     { id: "bennar", name: "Bennar Beach, Dyffryn Ardudwy", urgency: "high", date: "Tue 4 Aug", phone: "01341 247001", link: "https://www.bennar.co.uk/", note: "Book a grass EHU pitch — single peak-August nights are scarce here, so call to confirm. Dune boardwalk to the beach; no on-site shop." },
     { id: "cornmill", name: "The Corn Mill, Llangollen — lunch table", urgency: "low", date: "Sat 1 Aug ~13:00", link: "https://www.cornmill-llangollen.co.uk/", note: "Terrace table over the river. Book ahead — Saturday August lunch fills up." },
     { id: "conwy", name: "Conwy Castle / Cadw Explorer Pass", urgency: "low", date: "Sun 2 Aug", link: "https://cadw.gov.wales/visit/places-to-visit/conwy-castle", note: "Buy the 7-day Explorer Pass at Conwy reception on the day — covers Conwy + Harlech + Bishop's Palace for the whole trip." }
@@ -935,7 +935,7 @@ export default function App() {
                 <span className="inline-flex items-center gap-1.5"><span className="w-6 h-[2px]" style={{ background: "var(--rust)", borderTop: "1px dashed" }} />Drive</span>
               </div>
               <div className="mt-4 text-center">
-                <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CBennar+Beach+Dyffryn+Ardudwy+LL44+2RX%7CMorfa+Bychan+Holiday+Park+Aberystwyth+SY23+4QL%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CCaerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
+                <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CBennar+Beach+Dyffryn+Ardudwy+LL44+2RX%7CPengarreg+Caravan+Park+Llanrhystud+SY23+5DJ%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CCaerfai+Bay+Caravan+%26+Tent+Park+SA62+6QT%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
                   <MapPin size={14} /> View full route in Google Maps
                 </a>
               </div>
