@@ -575,23 +575,23 @@ function PackingList() {
 
 function BookingsList() {
   const [bookings, setBookings] = useSharedState('bookings', {
-    james: false, zipworld: false, porthclais: true, newquayboats: false, mwnt: false, pencelli: false, royaloak: false,
-    cwellyn: false, erwglas: false, pengarreg: false, bennar: false, cornmill: false, conwy: false
+    james: false, zipworld: true, porthclais: true, newquayboats: true, mwnt: true, pencelli: true, royaloak: true,
+    cwellyn: true, erwglas: true, pengarreg: true, bennar: true, cornmill: true, conwy: false
   });
 
   const items = [
     { id: "james", name: "Pay James — £100 van extension", urgency: "high", date: "Before 1 Aug", note: "£50 early pickup (Sat 1 Aug) + £50 late return (Sun 9 Aug). Pay via Goboony." },
-    { id: "zipworld", name: "Zip World Betws-y-Coed — Fforest Coaster", urgency: "critical", date: "Sun 2 Aug ~12:30", link: "https://www.zipworld.co.uk/adventure/fforest-coaster", note: "Whole family rides: Mason on your lap (3+ with adult), Harper & Mylo solo (9+). Book one slot for all 4 at once." },
-    { id: "porthclais", name: "Porthclais Farm, St Davids", urgency: "high", date: "Fri 7 Aug", phone: "07970 439310", link: "https://porthclaiscampsite.co.uk/", note: "CONFIRMED ✓ — single Friday night booked. No electric hook-up (off-grid night). Swapped in after Caerfai's 5-night August minimum ruled it out." },
-    { id: "newquayboats", name: "New Quay Boat Trips — Dolphin Spotting", urgency: "critical", date: "Thu 6 Aug ~11:30", phone: "01545 560800", link: "https://www.newquayboattrips.co.uk/", note: "1-hour Ermol VI trip, £37.50 family of 4. August + dolphins = book ahead." },
-    { id: "mwnt", name: "Tŷ Gwyn, Mwnt", urgency: "high", date: "Thu 6 Aug", phone: "01239 614518", link: "https://campingatmwnt.com/", note: "Small cliff-top site" },
-    { id: "pencelli", name: "Pencelli Castle, Brecon", urgency: "high", date: "Sat 8 Aug", phone: "01874 665451", link: "http://www.pencelli-castle.com/", note: "Popular Beacons site" },
-    { id: "royaloak", name: "Royal Oak Inn, Pencelli — last-night dinner", urgency: "high", date: "Sat 8 Aug ~19:00", phone: "01874 665396", link: "https://www.facebook.com/TheRoyalOakPencelli/", note: "100m walk from the campsite. Kitchen stops at 8pm — aim for 7pm. Saturday August will be busy, book a table for 4." },
-    { id: "cwellyn", name: "Snowdon Base Camp, Rhyd-Ddu (2 nights)", urgency: "high", date: "Sun 2 + Mon 3 Aug", phone: "01766 890321", link: "http://www.snowdoninn.co.uk/", note: "Phone-only via Cwellyn Arms pub (same owner). Specifically ask for one of the 3 EHU campervan bays — only 3 available." },
-    { id: "erwglas", name: "Erw Glas, Maenan", urgency: "high", date: "Sat 1 Aug", phone: "01492 702486", link: "https://www.erwglasglampingandcamping.co.uk/", note: "Book a hard-standing pitch with EHU. Pre-order takeaway pizza for Sat night + breakfast hamper for Sun morning." },
-    { id: "pengarreg", name: "Pengarreg, Llanrhystud", urgency: "high", date: "Wed 5 Aug", phone: "01974 202247", link: "https://pengarregcaravanpark.co.uk/", note: "Has availability — book a seafront touring pitch with EHU." },
-    { id: "bennar", name: "Bennar Beach, Dyffryn Ardudwy", urgency: "high", date: "Tue 4 Aug", phone: "01341 247001", link: "https://www.bennar.co.uk/", note: "Book a grass EHU pitch — single peak-August nights are scarce here, so call to confirm. Dune boardwalk to the beach; no on-site shop." },
-    { id: "cornmill", name: "The Corn Mill, Llangollen — lunch table", urgency: "low", date: "Sat 1 Aug ~13:00", link: "https://www.cornmill-llangollen.co.uk/", note: "Terrace table over the river. Book ahead — Saturday August lunch fills up." },
+    { id: "zipworld", name: "Zip World Betws-y-Coed — Fforest Coaster", urgency: "critical", date: "Sun 2 Aug ~12:30", link: "https://www.zipworld.co.uk/adventure/fforest-coaster", note: "BOOKED ✓ £121.40 · booking 03497811. Arrive 12:00, start 12:30. Parking incl. (Betws-y-Coed 8h). Waivers signed online for all 4 ✓." },
+    { id: "porthclais", name: "Porthclais Farm, St Davids", urgency: "high", date: "Fri 7 Aug", phone: "07970 439310", link: "https://porthclaiscampsite.co.uk/", note: "BOOKED ✓ £25 · receipt 1942-6801. Single Friday night, camper van pitch. No electric hook-up (the trip's off-grid night)." },
+    { id: "newquayboats", name: "New Quay Boat Trips — Dolphin Spotting", urgency: "critical", date: "Thu 6 Aug 11:30", phone: "01545 560800", link: "https://www.newquayboattrips.co.uk/", note: "BOOKED ✓ £60 · booking 2551605217732353. 1-hour trip on Dreamcatcher, 2 adults + 2 children. Arrive by 11:10." },
+    { id: "mwnt", name: "Tŷ Gwyn, Mwnt", urgency: "high", date: "Thu 6 Aug", phone: "01239 614518", link: "https://campingatmwnt.com/", note: "BOOKED ✓ £34 · 1 night with electric hook-up (Davina/Huw confirmed by email)." },
+    { id: "pencelli", name: "Pencelli Castle, Brecon", urgency: "high", date: "Sat 8 Aug", phone: "01874 665451", link: "http://www.pencelli-castle.com/", note: "BOOKED ✓ £56 · booking 10599542. The Oaks — grass standing pitch with electric. Report to reception on arrival." },
+    { id: "royaloak", name: "Royal Oak Inn, Pencelli — last-night dinner", urgency: "high", date: "Sat 8 Aug ~19:00", phone: "01874 665396", link: "https://www.facebook.com/TheRoyalOakPencelli/", note: "BOOKED ✓ table by phone. 100m walk from the campsite. Kitchen stops at 8pm — aim for 7pm." },
+    { id: "cwellyn", name: "Snowdon Base Camp, Rhyd-Ddu (2 nights)", urgency: "high", date: "Sun 2 + Mon 3 Aug", phone: "01766 890321", link: "http://www.snowdoninn.co.uk/", note: "BOOKED ✓ £135 · ref CA/9737/10514. Hardstanding EHU pitch, 2 nights (arr 02/08, dep 04/08). Check in at the Cwellyn Arms pub." },
+    { id: "erwglas", name: "Erw Glas, Maenan", urgency: "high", date: "Sat 1 Aug", phone: "01492 702486", link: "https://www.erwglasglampingandcamping.co.uk/", note: "BOOKED ✓ £28 · ref WTB1A5AD09. Small campervan pitch (13:00–15:15 arrival window). Confirm EHU + pre-order pizza/breakfast hamper. Update car reg." },
+    { id: "pengarreg", name: "Pengarreg, Llanrhystud", urgency: "high", date: "Wed 5 Aug", phone: "01974 202247", link: "https://pengarregcaravanpark.co.uk/", note: "BOOKED ✓ £32 · ref PCP/5699/8014. Touring + camping electric, 1 night. Occupancy logged as 1 adult + 3 children. Update car reg." },
+    { id: "bennar", name: "Bennar Beach, Dyffryn Ardudwy", urgency: "high", date: "Tue 4 Aug", phone: "01341 247001", link: "https://www.bennar.co.uk/", note: "BOOKED ✓ £40 · booking 5826, pitch 101 (electric). Arrive after 13:00. Shower block code 1524, bring £1 coins. Site asked for car reg — update it." },
+    { id: "cornmill", name: "The Corn Mill, Llangollen — lunch table", urgency: "low", date: "Sat 1 Aug 13:00–15:15", link: "https://www.cornmill-llangollen.co.uk/", note: "BOOKED ✓ table for 4 (Indoor bookable). Riverside table over the Dee." },
     { id: "conwy", name: "Conwy Castle / Cadw Explorer Pass", urgency: "low", date: "Sun 2 Aug", link: "https://cadw.gov.wales/visit/places-to-visit/conwy-castle", note: "Buy the 7-day Explorer Pass at Conwy reception on the day — covers Conwy + Harlech + Bishop's Palace for the whole trip." }
   ];
 
