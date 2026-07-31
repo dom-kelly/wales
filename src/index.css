@@ -23,3 +23,14 @@ html, body {
 }
 
 .font-serif { font-family: 'Fraunces', Georgia, serif; }
+
+/* iOS Safari zooms the viewport in when you focus a control whose text is
+   under 16px, and never zooms back out — you're left pinching to recover.
+   The :not() guards are load-bearing rather than decorative: they lift these
+   to specificity (0,1,1) so they outrank Tailwind's text-sm/text-xs, which a
+   bare `select {}` would lose to and silently reintroduce the zoom. */
+input:not([type="file"]),
+select:not([hidden]),
+textarea:not([hidden]) {
+  font-size: 16px;
+}

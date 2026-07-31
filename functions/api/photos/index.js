@@ -43,6 +43,14 @@ export async function onRequestPost({ env, request }) {
 
   if (!Number.isFinite(dayNum)) return jsonErr(400, 'dayNum required');
 
+  // The client sends the photo's EXIF capture time. Trust the camera clock only
+  // if it's plausible, otherwise fall back to when it reached us.
+  const claimedTakenAt = parseInt(url.searchParams.get('takenAt') || '', 10);
+  const now = Date.now();
+  const takenAt = Number.isFinite(claimedTakenAt) && claimedTakenAt > 0 && claimedTakenAt < now + 86400000
+    ? claimedTakenAt
+    : now;
+
   const contentType = request.headers.get('Content-Type') || 'image/jpeg';
   if (!contentType.startsWith('image/')) return jsonErr(400, 'Body must be an image');
 
@@ -56,15 +64,22 @@ export async function onRequestPost({ env, request }) {
 
   await env.PHOTOS.put(r2Key, bytes, { httpMetadata: { contentType } });
 
+  const srcFormat = (url.searchParams.get('srcFormat') || '').slice(0, 12);
+  const srcMagic = (url.searchParams.get('srcMagic') || '').slice(0, 24);
+  const srcModified = parseInt(url.searchParams.get('srcModified') || '', 10);
+
   const record = {
     id,
     r2Key,
     dayNum,
     stopIndex: Number.isFinite(stopIndex) ? stopIndex : null,
     caption,
-    takenAt: Date.now(),
+    takenAt, // the EXIF capture time when we got one, else arrival time
     mime: contentType,
     ...(Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : {}),
+    ...(srcFormat ? { srcFormat } : {}),
+    ...(srcMagic ? { srcMagic } : {}),
+    ...(Number.isFinite(srcModified) ? { srcModified } : {}),
   };
 
   const existing = await env.TRIP_STATE.get(META_KEY);

@@ -1,11 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { MapPin, Clock, Car, Bed, Utensils, Camera, Phone, ExternalLink, Check, X, Navigation, ChevronDown, ChevronRight, Calendar, Users, PoundSterling, AlertCircle, Mountain, Waves, Trees, Castle, Zap, ShoppingCart, Lock, Unlock } from 'lucide-react';
-import { useSharedState, usePhotos, useAuth } from './api.js';
-
-function isDriverMode() {
-  if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).get('driver') === '1';
-}
+import React, { useState, useMemo, useRef, useEffect, useCallback, createContext, useContext } from 'react';
+import { MapPin, Clock, Car, Bed, Utensils, Camera, Phone, ExternalLink, Check, X, Navigation, ChevronDown, ChevronRight, ChevronLeft, Calendar, Users, PoundSterling, AlertCircle, Mountain, Waves, Trees, Castle, Zap, ShoppingCart, Lock, Unlock, Trash2 } from 'lucide-react';
+import { useSharedState, usePhotos, useAuth, useCheckin } from './api.js';
+import { readPhotoExif } from './exif.js';
 
 const TRIP = {
   title: "Wales 2026",
@@ -161,6 +157,9 @@ const project = (lat, lng) => {
   return [x, y];
 };
 
+const withinMap = ({ lat, lng }) =>
+  lat >= BOUNDS.minLat && lat <= BOUNDS.maxLat && lng >= BOUNDS.minLng && lng <= BOUNDS.maxLng;
+
 const OVERNIGHT_COORDS = [
   { day: 1, name: "Erw Glas", lat: 53.1981, lng: -3.8240 },
   { day: 2, name: "Snowdon BC", lat: 53.0545, lng: -4.1360 },
@@ -196,21 +195,153 @@ function StatusBadge({ booked, urgency }) {
   return <span style={{ background: "var(--accent)", color: "var(--cream)" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">To book</span>;
 }
 
-function PhotoThumb({ photo, isDriver, onDelete, size = "h-24 w-24" }) {
+// Lets a thumbnail anywhere in the tree open the lightbox without threading a
+// callback through DayCard and StopRow.
+const LightboxContext = createContext(() => {});
+
+function confirmDelete(photo, onDelete) {
+  const what = photo.caption ? `"${photo.caption}"` : 'this photo';
+  if (window.confirm(`Delete ${what}? This can't be undone.`)) {
+    onDelete?.(photo.id);
+    return true;
+  }
+  return false;
+}
+
+function Lightbox({ photos, index, onIndex, onClose, canEdit, onDelete }) {
+  const hasPrev = index > 0;
+  const hasNext = index < photos.length - 1;
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowLeft' && hasPrev) onIndex(index - 1);
+      else if (e.key === 'ArrowRight' && hasNext) onIndex(index + 1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [index, hasPrev, hasNext, onClose, onIndex]);
+
+  // Stop the page behind the overlay scrolling under your finger.
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, []);
+
+  // Warm the neighbours so arrowing through feels instant.
+  useEffect(() => {
+    [index - 1, index + 1].forEach(i => {
+      if (photos[i]) new Image().src = `/api/photos/${photos[i].id}`;
+    });
+  }, [index, photos]);
+
+  const touchStart = useRef(null);
+  const handleTouchEnd = (e) => {
+    if (touchStart.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current;
+    touchStart.current = null;
+    if (Math.abs(dx) < 50) return;
+    if (dx > 0 && hasPrev) onIndex(index - 1);
+    else if (dx < 0 && hasNext) onIndex(index + 1);
+  };
+
+  const photo = photos[index];
+  if (!photo) return null;
+  const dayMeta = DAYS.find(d => d.num === photo.dayNum);
+  const stop = e => e.stopPropagation();
+  const arrowStyle = { background: "rgba(245, 239, 224, 0.14)", color: "var(--cream)" };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex flex-col"
+      style={{ background: "rgba(15, 22, 19, 0.95)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+      onTouchStart={e => { touchStart.current = e.touches[0].clientX; }}
+      onTouchEnd={handleTouchEnd}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo viewer"
+    >
+      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}>
+        <span className="text-[11px] uppercase tracking-widest" style={{ color: "rgba(245, 239, 224, 0.65)" }}>
+          {index + 1} of {photos.length}
+        </span>
+        <div className="flex items-center gap-1" onClick={stop}>
+          {canEdit && onDelete && (
+            <button
+              onClick={() => { if (confirmDelete(photo, onDelete)) onClose(); }}
+              aria-label="Delete photo"
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ color: "rgba(245, 239, 224, 0.8)" }}
+            >
+              <Trash2 size={17} />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ color: "var(--cream)" }}
+          >
+            <X size={22} />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 flex items-center justify-center px-3 relative">
+        {hasPrev && (
+          <button
+            onClick={e => { stop(e); onIndex(index - 1); }}
+            aria-label="Previous photo"
+            className="absolute left-2 z-10 w-11 h-11 rounded-full flex items-center justify-center"
+            style={arrowStyle}
+          >
+            <ChevronLeft size={24} />
+          </button>
+        )}
+        <img
+          src={`/api/photos/${photo.id}`}
+          alt={photo.caption || `Day ${photo.dayNum}`}
+          onClick={stop}
+          className="max-h-full max-w-full object-contain rounded"
+        />
+        {hasNext && (
+          <button
+            onClick={e => { stop(e); onIndex(index + 1); }}
+            aria-label="Next photo"
+            className="absolute right-2 z-10 w-11 h-11 rounded-full flex items-center justify-center"
+            style={arrowStyle}
+          >
+            <ChevronRight size={24} />
+          </button>
+        )}
+      </div>
+
+      <div className="flex-shrink-0 px-5 py-4 text-center" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }} onClick={stop}>
+        <p className="font-serif text-base" style={{ color: "var(--cream)" }}>
+          Day {photo.dayNum}{dayMeta ? ` · ${dayMeta.title}` : ''}
+        </p>
+        {photo.caption && (
+          <p className="text-sm mt-1" style={{ color: "rgba(245, 239, 224, 0.72)" }}>{photo.caption}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PhotoThumb({ photo, canEdit, onDelete, onOpen, size = "h-24 w-24" }) {
   const handleDelete = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const what = photo.caption ? `"${photo.caption}"` : 'this photo';
-    if (window.confirm(`Delete ${what}? This can't be undone.`)) {
-      onDelete?.(photo.id);
-    }
+    confirmDelete(photo, onDelete);
   };
   return (
     <div className="relative">
-      <a href={`/api/photos/${photo.id}`} target="_blank" rel="noopener noreferrer" className="block">
+      <button onClick={onOpen} className="block w-full" aria-label={photo.caption || `Photo from day ${photo.dayNum}`}>
         <img src={`/api/photos/${photo.id}`} alt={photo.caption || ''} loading="lazy" className={`rounded ${size} object-cover border`} style={{ borderColor: "var(--line)" }} />
-      </a>
-      {isDriver && onDelete && (
+      </button>
+      {canEdit && onDelete && (
         <button
           onClick={handleDelete}
           aria-label="Delete photo"
@@ -224,13 +355,14 @@ function PhotoThumb({ photo, isDriver, onDelete, size = "h-24 w-24" }) {
   );
 }
 
-function PhotoStrip({ photos, isDriver, onDelete }) {
+function PhotoStrip({ photos, canEdit, onDelete }) {
+  const openLightbox = useContext(LightboxContext);
   if (!photos || !photos.length) return null;
   return (
     <div className="flex flex-wrap gap-2 mt-3">
-      {photos.map(p => (
+      {photos.map((p, i) => (
         <div key={p.id} className="w-24">
-          <PhotoThumb photo={p} isDriver={isDriver} onDelete={onDelete} />
+          <PhotoThumb photo={p} canEdit={canEdit} onDelete={onDelete} onOpen={() => openLightbox(photos, i)} />
           {p.caption && <p className="text-[10px] mt-1 truncate" style={{ color: "var(--slate)" }}>{p.caption}</p>}
         </div>
       ))}
@@ -253,7 +385,9 @@ function PhotoUploadButton({ dayNum, stopIndex, upload, uploading }) {
   };
   return (
     <>
-      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handle} />
+      {/* No capture attribute: it would force the in-browser camera, and photos
+          taken that way carry no GPS. Letting iOS offer the library keeps it. */}
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handle} />
       <button onClick={() => inputRef.current?.click()} disabled={uploading} className="text-xs inline-flex items-center gap-1 hover:underline disabled:opacity-50" style={{ color: "var(--accent)" }}>
         <Camera size={11} />{uploading ? 'Uploading…' : 'Add photo'}
       </button>
@@ -261,7 +395,7 @@ function PhotoUploadButton({ dayNum, stopIndex, upload, uploading }) {
   );
 }
 
-function StopRow({ stop, isLast, dayNum, stopIndex, photos, isDriver, upload, uploading, remove }) {
+function StopRow({ stop, isLast, dayNum, stopIndex, photos, canEdit, upload, uploading, remove }) {
   const meta = STOP_META[stop.type];
   const Icon = meta.icon;
   return (
@@ -282,15 +416,15 @@ function StopRow({ stop, isLast, dayNum, stopIndex, photos, isDriver, upload, up
           {stop.booking && <StatusBadge booked={false} urgency={BOOKING_META[stop.booking]?.urgency} />}
           {stop.phone && <a href={`tel:${stop.phone.replace(/\s/g, '')}`} className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><Phone size={11} />{stop.phone}</a>}
           {stop.link && <a href={stop.link} target="_blank" rel="noopener noreferrer" className="text-xs inline-flex items-center gap-1 hover:underline" style={{ color: "var(--accent)" }}><ExternalLink size={11} />Website</a>}
-          {isDriver && <PhotoUploadButton dayNum={dayNum} stopIndex={stopIndex} upload={upload} uploading={uploading} />}
+          {canEdit && <PhotoUploadButton dayNum={dayNum} stopIndex={stopIndex} upload={upload} uploading={uploading} />}
         </div>
-        <PhotoStrip photos={photos} isDriver={isDriver} onDelete={remove} />
+        <PhotoStrip photos={photos} canEdit={canEdit} onDelete={remove} />
       </div>
     </div>
   );
 }
 
-function DayCard({ day, open, onToggle, photos, isDriver, upload, uploading, remove }) {
+function DayCard({ day, open, onToggle, photos, canEdit, upload, uploading, remove }) {
   const ref = useRef(null);
   const handleToggle = () => {
     const willOpen = !open;
@@ -339,7 +473,7 @@ function DayCard({ day, open, onToggle, photos, isDriver, upload, uploading, rem
                 dayNum={day.num}
                 stopIndex={i}
                 photos={photos?.filter(p => p.stopIndex === i)}
-                isDriver={isDriver}
+                canEdit={canEdit}
                 upload={upload}
                 uploading={uploading}
                 remove={remove}
@@ -352,7 +486,7 @@ function DayCard({ day, open, onToggle, photos, isDriver, upload, uploading, rem
   );
 }
 
-function RouteMap() {
+function RouteMap({ checkin }) {
   const [home] = useState(project(HOME.lat, HOME.lng));
   const overnights = useMemo(() => OVERNIGHT_COORDS.map(o => ({ ...o, xy: project(o.lat, o.lng) })), []);
   // Deduplicate consecutive same locations (Cwellyn nights 2 & 3)
@@ -360,6 +494,13 @@ function RouteMap() {
     const pts = [home, ...overnights.map(o => o.xy), home];
     return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
   }, [home, overnights]);
+
+  // Off-map coordinates would clamp to an edge and read as a real position, so
+  // drop the dot entirely rather than draw it somewhere untrue.
+  const checkinXY = useMemo(() => {
+    if (!checkin || !withinMap(checkin)) return null;
+    return project(checkin.lat, checkin.lng);
+  }, [checkin]);
 
   return (
     <div className="rounded-lg overflow-hidden" style={{ background: "var(--stone)" }}>
@@ -391,6 +532,20 @@ function RouteMap() {
 
         {/* Route path */}
         <path d={routePath} fill="none" stroke="var(--rust)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 4" opacity="0.85" />
+
+        {/* Last check-in. Deliberately drawn beneath the markers: checking in
+            at a campsite is the normal case, and this way the pulse haloes the
+            night's marker instead of hiding its number. */}
+        {checkinXY && (
+          <g transform={`translate(${checkinXY[0]}, ${checkinXY[1]})`}>
+            <circle r="6" fill="var(--rust)" opacity="0.45">
+              <animate attributeName="r" values="7;24;7" dur="2.8s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.5;0;0.5" dur="2.8s" repeatCount="indefinite" />
+            </circle>
+            <circle r="13" fill="var(--rust)" opacity="0.18" />
+            <circle r="6" fill="var(--rust)" stroke="var(--cream)" strokeWidth="1.5" />
+          </g>
+        )}
 
         {/* Home marker */}
         <g transform={`translate(${home[0]}, ${home[1]})`}>
@@ -439,6 +594,86 @@ function RouteMap() {
           <text fontSize="7" fill="var(--slate)" letterSpacing="2" fontFamily="monospace">~950 MI · 9 DAYS · 8 NIGHTS</text>
         </g>
       </svg>
+    </div>
+  );
+}
+
+function relativeTime(ms) {
+  const mins = Math.round((Date.now() - ms) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.round(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+// Describes a check-in by the nearest overnight stop when there is one, since
+// "near Porthclais" means more to someone following along than coordinates.
+function describeCheckin(checkin) {
+  const nearest = nearestOvernight({ lat: checkin.lat, lng: checkin.lng }, 25);
+  const when = relativeTime(checkin.at);
+  return nearest ? `Near ${nearest.name} · ${when}` : `Checked in ${when}`;
+}
+
+function CheckInPanel({ checkin, checkIn, clearCheckin, busy, canEdit }) {
+  const [error, setError] = useState(null);
+
+  const handleCheckIn = async () => {
+    setError(null);
+    try {
+      await checkIn();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleClear = async () => {
+    if (!window.confirm('Remove the check-in pin from the map?')) return;
+    setError(null);
+    try {
+      await clearCheckin();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (!canEdit && !checkin) return null;
+
+  return (
+    <div className="mt-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          {checkin ? (
+            <p className="text-xs inline-flex items-center gap-1.5" style={{ color: "var(--ink)" }}>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--rust)" }} />
+              {describeCheckin(checkin)}
+              {!withinMap(checkin) && <span style={{ color: "var(--slate)" }}>(off the map)</span>}
+            </p>
+          ) : (
+            <p className="text-xs" style={{ color: "var(--slate)" }}>No check-in yet</p>
+          )}
+        </div>
+        {canEdit && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {checkin && (
+              <button onClick={handleClear} disabled={busy} className="text-xs hover:underline disabled:opacity-50" style={{ color: "var(--slate)" }}>
+                Clear
+              </button>
+            )}
+            <button
+              onClick={handleCheckIn}
+              disabled={busy}
+              className="text-xs font-medium px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 disabled:opacity-60"
+              style={{ background: "var(--ink)", color: "var(--cream)" }}
+            >
+              <MapPin size={12} />
+              {busy ? 'Locating…' : checkin ? 'Check in again' : 'Check in here'}
+            </button>
+          </div>
+        )}
+      </div>
+      {error && <p className="text-[11px] mt-2" style={{ color: "var(--rust)" }}>{error}</p>}
     </div>
   );
 }
@@ -634,13 +869,45 @@ function BookingsList() {
   );
 }
 
-function BottomNav({ active, onChange, isDriver }) {
-  const tabs = [
-    { id: 'route', label: 'Route', icon: Navigation },
-    { id: 'bookings', label: 'Bookings', icon: Calendar },
-    { id: 'todo', label: 'To do', icon: Check },
-    { id: 'photos', label: isDriver ? 'Add photo' : 'Photos', icon: Camera },
-  ];
+const TABS = ['route', 'bookings', 'todo', 'photos'];
+
+function tabFromPath() {
+  const seg = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  return TABS.includes(seg) ? seg : 'route';
+}
+
+// Each tab is a real URL, so a refresh keeps you where you were, back/forward
+// work, and you can send someone straight to the packing list.
+function useTabRoute() {
+  const [tab, setTab] = useState(tabFromPath);
+
+  useEffect(() => {
+    const onPop = () => setTab(tabFromPath());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const navigate = useCallback((next) => {
+    setTab(next);
+    const path = next === 'route' ? '/' : `/${next}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState({ tab: next }, '', path);
+    }
+  }, []);
+
+  return [tab, navigate];
+}
+
+// A destination shouldn't rename itself based on whether you're unlocked.
+const NAV_TABS = [
+  { id: 'route', label: 'Route', icon: Navigation },
+  { id: 'bookings', label: 'Bookings', icon: Calendar },
+  { id: 'todo', label: 'To do', icon: Check },
+  { id: 'photos', label: 'Photos', icon: Camera },
+];
+
+function BottomNav({ active, onChange }) {
+  const tabs = NAV_TABS;
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur" style={{ background: "rgba(245, 239, 224, 0.92)", borderColor: "var(--line)", paddingBottom: "env(safe-area-inset-bottom, 0)" }}>
       <div className="max-w-2xl mx-auto flex">
@@ -668,9 +935,9 @@ function BottomNav({ active, onChange, isDriver }) {
 const TRIP_YEAR = 2026;
 const TRIP_MONTH_IDX = 7; // August (0-indexed)
 
-function dayNumFromToday(now = new Date()) {
-  if (now.getFullYear() !== TRIP_YEAR || now.getMonth() !== TRIP_MONTH_IDX) return null;
-  const d = now.getDate();
+function tripDayFor(date = new Date()) {
+  if (date.getFullYear() !== TRIP_YEAR || date.getMonth() !== TRIP_MONTH_IDX) return null;
+  const d = date.getDate();
   return d >= 1 && d <= 9 ? d : null;
 }
 
@@ -692,122 +959,263 @@ function nearestOvernight(loc, thresholdKm = 60) {
   return best;
 }
 
+const DAY_MONTH = { day: 'numeric', month: 'short' };
+
+// Works out which trip day a photo belongs to, best evidence first: the EXIF
+// capture date, then EXIF GPS, then the file's own modified date, then today.
+// EXIF outranks lastModified because it travels with the image, whereas a
+// modified date can be reset by copying — but in practice iOS strips EXIF on
+// the way into a file input, so lastModified is usually what we get to use.
+// Returns null when nothing lines up, leaving the manual picker alone.
+function inferDay(exif = {}, file = null) {
+  const taken = exif.takenAt ? tripDayFor(exif.takenAt) : null;
+  const nearest = exif.lat != null ? nearestOvernight({ lat: exif.lat, lng: exif.lng }) : null;
+
+  if (taken && nearest) {
+    return taken === nearest.day
+      ? { day: taken, hint: `Taken on Day ${taken} · near ${nearest.name}` }
+      : { day: taken, hint: `Taken on Day ${taken} (nearest stop is Day ${nearest.day}'s ${nearest.name})` };
+  }
+  if (taken) return { day: taken, hint: `Taken on Day ${taken}` };
+  if (nearest) return { day: nearest.day, hint: `Near ${nearest.name} · Day ${nearest.day}` };
+
+  if (file?.lastModified) {
+    const modified = new Date(file.lastModified);
+    const day = tripDayFor(modified);
+    if (day) {
+      return { day, hint: `Photo dated ${modified.toLocaleDateString('en-GB', DAY_MONTH)} · Day ${day}` };
+    }
+  }
+
+  const today = tripDayFor();
+  return today ? { day: today, hint: `No date in the photo · today is Day ${today}` } : null;
+}
+
 function PasswordPanel({ hasPassword, setPassword }) {
-  const handleSet = () => {
-    const pw = window.prompt(hasPassword ? 'Enter new password (leave blank to clear)' : 'Driver password');
-    if (pw === null) return;
-    setPassword(pw.trim());
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState('');
+  const [error, setError] = useState(null);
+  const [checking, setChecking] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (checking) return;
+    setChecking(true);
+    setError(null);
+    const result = await setPassword(value);
+    setChecking(false);
+    if (result.ok) {
+      setOpen(false);
+      setValue('');
+    } else {
+      setError(result.error);
+    }
   };
+
+  const lock = async () => {
+    await setPassword('');
+    setOpen(false);
+    setValue('');
+    setError(null);
+  };
+
   return (
-    <div className="mb-6 p-3 rounded-lg flex items-center justify-between gap-3" style={{ background: hasPassword ? "var(--stone)" : "rgba(185, 84, 47, 0.12)", border: "1px solid var(--line)" }}>
-      <div className="flex items-center gap-2 min-w-0">
-        {hasPassword
-          ? <Unlock size={14} style={{ color: "var(--green)" }} />
-          : <Lock size={14} style={{ color: "var(--rust)" }} />}
-        <div className="min-w-0">
-          <p className="text-xs font-medium" style={{ color: "var(--ink)" }}>
-            {hasPassword ? 'Unlocked · uploads + delete enabled' : 'Set a driver password to upload or delete'}
-          </p>
+    <div className="mb-6 p-3 rounded-lg" style={{ background: hasPassword ? "var(--stone)" : "rgba(185, 84, 47, 0.12)", border: "1px solid var(--line)" }}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {hasPassword
+            ? <Unlock size={14} style={{ color: "var(--green)" }} />
+            : <Lock size={14} style={{ color: "var(--rust)" }} />}
+          <div className="min-w-0">
+            <p className="text-xs font-medium" style={{ color: "var(--ink)" }}>
+              {hasPassword ? 'Unlocked · you can add and delete photos' : 'Got the trip password? Unlock to add photos'}
+            </p>
+          </div>
         </div>
+        <button
+          onClick={hasPassword ? lock : () => setOpen(o => !o)}
+          className="text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0"
+          style={{ background: "var(--ink)", color: "var(--cream)" }}
+        >
+          {hasPassword ? 'Lock' : (open ? 'Cancel' : 'Unlock')}
+        </button>
       </div>
-      <button
-        onClick={handleSet}
-        className="text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0"
-        style={{ background: "var(--ink)", color: "var(--cream)" }}
-      >
-        {hasPassword ? 'Change' : 'Set'}
-      </button>
+
+      {!hasPassword && open && (
+        <form onSubmit={submit} className="flex gap-2 mt-3">
+          {/* A plain visible field, not window.prompt: phone keyboards
+              autocapitalise prompts and silently break the password. */}
+          <input
+            type="text"
+            value={value}
+            onChange={e => { setValue(e.target.value); setError(null); }}
+            placeholder="Trip password"
+            autoFocus
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="off"
+            spellCheck={false}
+            className="flex-1 min-w-0 p-2.5 rounded-md"
+            style={{ background: "var(--cream)", border: "1px solid var(--line)", color: "var(--ink)" }}
+          />
+          <button
+            type="submit"
+            disabled={checking || !value.trim()}
+            className="px-4 py-2.5 rounded-md text-sm font-medium flex-shrink-0 disabled:opacity-50"
+            style={{ background: "var(--ink)", color: "var(--cream)" }}
+          >
+            {checking ? '…' : 'Go'}
+          </button>
+        </form>
+      )}
+      {error && (
+        <p className="text-[11px] mt-2" style={{ color: "var(--rust)" }}>{error}</p>
+      )}
     </div>
   );
 }
 
-function PhotoTab({ photos, upload, uploading, isDriver, remove, hasPassword, setPassword }) {
-  const [dayNum, setDayNum] = useState(1);
-  const [autoHint, setAutoHint] = useState(null);
-  const [coords, setCoords] = useState(null);
-  const userPicked = useRef(false);
+// What the browser actually handed over, so a photo that files itself on the
+// wrong day is explainable rather than mysterious.
+function describeSource({ file, exif }) {
+  const mb = (file.size / 1048576).toFixed(1);
+  const found = [exif.takenAt && 'date', exif.lat != null && 'location'].filter(Boolean);
+  return `${exif.format || '?'} · ${mb} MB · ${found.length ? found.join(' + ') : 'no metadata'}`;
+}
+
+// Review step shown between picking a photo and uploading it. The day is
+// already worked out; this just shows the answer and offers a way to correct it.
+function PendingUpload({ pending, onChangeDay, onCaption, onConfirm, onCancel, uploading }) {
+  // An unresolved day is the one case worth asking about up front.
+  const [showPicker, setShowPicker] = useState(!pending.hint);
+  const previewUrl = useMemo(() => URL.createObjectURL(pending.file), [pending.file]);
+  useEffect(() => () => URL.revokeObjectURL(previewUrl), [previewUrl]);
+  const dayMeta = DAYS.find(d => d.num === pending.day);
+
+  return (
+    <div className="mb-8 p-4 rounded-lg" style={{ background: "var(--stone)", border: "1px solid var(--line)" }}>
+      <div className="flex gap-3">
+        <img src={previewUrl} alt="" className="w-20 h-20 rounded object-cover flex-shrink-0 border" style={{ borderColor: "var(--line)" }} />
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-lg leading-tight" style={{ color: "var(--ink)" }}>
+            Day {pending.day}{dayMeta ? ` · ${dayMeta.title}` : ''}
+          </p>
+          <p className="text-[11px] mt-1 italic" style={{ color: "var(--slate)" }}>
+            {pending.hint || "Couldn't read a date or place from this photo — pick a day."}
+          </p>
+          <p className="text-[10px] mt-1 font-mono" style={{ color: "var(--slate)" }}>
+            {describeSource(pending)}
+          </p>
+          {!showPicker && (
+            <button onClick={() => setShowPicker(true)} className="text-[11px] mt-1.5 hover:underline" style={{ color: "var(--accent)" }}>
+              Wrong day?
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showPicker && (
+        <select
+          value={pending.day}
+          onChange={e => onChangeDay(parseInt(e.target.value, 10))}
+          className="w-full mt-3 p-2.5 rounded-md"
+          style={{ background: "var(--cream)", border: "1px solid var(--line)", color: "var(--ink)" }}
+        >
+          {DAYS.map(d => <option key={d.num} value={d.num}>Day {d.num} · {d.date} · {d.title}</option>)}
+        </select>
+      )}
+
+      <input
+        type="text"
+        value={pending.caption}
+        onChange={e => onCaption(e.target.value)}
+        placeholder="Caption (optional)"
+        maxLength={280}
+        className="w-full mt-3 p-2.5 rounded-md"
+        style={{ background: "var(--cream)", border: "1px solid var(--line)", color: "var(--ink)" }}
+      />
+
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={onConfirm}
+          disabled={uploading}
+          className="flex-1 py-3 rounded-md font-medium text-sm inline-flex items-center justify-center gap-2 disabled:opacity-60"
+          style={{ background: "var(--ink)", color: "var(--cream)" }}
+        >
+          <Camera size={16} />
+          {uploading ? 'Uploading…' : `Add to Day ${pending.day}`}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={uploading}
+          className="px-4 py-3 rounded-md font-medium text-sm disabled:opacity-60"
+          style={{ background: "var(--cream)", color: "var(--ink)", border: "1px solid var(--line)" }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PhotoTab({ photos, upload, uploading, canEdit, remove, hasPassword, setPassword }) {
+  const [pending, setPending] = useState(null);
   const inputRef = useRef(null);
 
-  // Date-based inference on mount (no permission needed)
-  useEffect(() => {
-    const fromDate = dayNumFromToday();
-    if (fromDate && !userPicked.current) {
-      setDayNum(fromDate);
-      setAutoHint(`Today is Day ${fromDate}`);
-    }
-  }, []);
-
-  // Location-based inference, non-blocking
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setCoords(loc);
-        const nearest = nearestOvernight(loc);
-        const fromDate = dayNumFromToday();
-        if (nearest && !userPicked.current) {
-          if (!fromDate) {
-            setDayNum(nearest.day);
-            setAutoHint(`Near ${nearest.name} · Day ${nearest.day}`);
-          } else if (fromDate === nearest.day) {
-            setAutoHint(`Today is Day ${fromDate} · near ${nearest.name}`);
-          } else {
-            setAutoHint(`Today is Day ${fromDate} (you're closer to Day ${nearest.day}'s ${nearest.name})`);
-          }
-        }
-      },
-      () => { /* user denied or timed out — keep date default */ },
-      { enableHighAccuracy: false, maximumAge: 5 * 60 * 1000, timeout: 8000 }
-    );
-  }, []);
-
-  const handleDayChange = (e) => {
-    userPicked.current = true;
-    setAutoHint(null);
-    setDayNum(parseInt(e.target.value, 10));
-  };
-
-  const handleUpload = async (e) => {
+  const handlePick = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    const caption = window.prompt('Caption (optional)') || '';
+
+    // The photo tells us the day; the picker below is only a correction.
+    const exif = await readPhotoExif(file);
+    const inferred = inferDay(exif, file);
+    setPending({
+      file,
+      exif,
+      caption: '',
+      day: inferred?.day ?? tripDayFor() ?? 1,
+      hint: inferred?.hint ?? null,
+    });
+  };
+
+  const handleConfirm = async () => {
+    const { file, exif, day, caption } = pending;
     try {
       await upload(file, {
-        dayNum,
+        dayNum: day,
         stopIndex: null,
         caption,
-        ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+        ...(exif.lat != null ? { lat: exif.lat, lng: exif.lng } : {}),
+        ...(exif.takenAt ? { takenAt: exif.takenAt.getTime() } : {}),
+        format: exif.format,
+        magic: exif.magic,
       });
+      setPending(null);
     } catch (err) {
       alert('Upload failed: ' + err.message);
     }
   };
+
   return (
     <div>
       <h2 className="font-serif text-2xl md:text-3xl mb-5" style={{ color: "var(--ink)" }}>
-        {isDriver ? 'Add a photo' : 'Journey log'}
+        {canEdit ? 'Add a photo' : 'Journey log'}
       </h2>
-      {isDriver && <PasswordPanel hasPassword={hasPassword} setPassword={setPassword} />}
-      {isDriver && (
-        <div className="mb-8 p-4 rounded-lg" style={{ background: "var(--stone)", border: "1px solid var(--line)" }}>
-          <label className="block text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--slate)" }}>Assign to day</label>
-          <select
-            value={dayNum}
-            onChange={handleDayChange}
-            className="w-full p-2.5 rounded-md text-sm"
-            style={{ background: "var(--cream)", border: "1px solid var(--line)", color: "var(--ink)" }}
-          >
-            {DAYS.map(d => <option key={d.num} value={d.num}>Day {d.num} · {d.date} · {d.title}</option>)}
-          </select>
-          {autoHint && (
-            <p className="text-[11px] mt-1.5 mb-3 italic" style={{ color: "var(--slate)" }}>
-              Auto: {autoHint}
-            </p>
-          )}
-          {!autoHint && <div className="mb-3" />}
-          <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleUpload} />
+      <PasswordPanel hasPassword={hasPassword} setPassword={setPassword} />
+      {canEdit && (pending ? (
+        <PendingUpload
+          pending={pending}
+          uploading={uploading}
+          onChangeDay={day => setPending(p => ({ ...p, day }))}
+          onCaption={caption => setPending(p => ({ ...p, caption }))}
+          onConfirm={handleConfirm}
+          onCancel={() => setPending(null)}
+        />
+      ) : (
+        <div className="mb-8">
+          {/* No capture attribute — see PhotoUploadButton. */}
+          <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePick} />
           <button
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
@@ -818,18 +1226,36 @@ function PhotoTab({ photos, upload, uploading, isDriver, remove, hasPassword, se
             {uploading ? 'Uploading…' : 'Take or choose a photo'}
           </button>
         </div>
-      )}
+      ))}
       {photos.length > 0 && (
         <h3 className="font-serif text-lg mb-4 pb-1.5 border-b" style={{ color: "var(--ink)", borderColor: "var(--line)" }}>
           {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
         </h3>
       )}
-      <Gallery photos={photos} isDriver={isDriver} onDelete={remove} />
+      <Gallery photos={photos} canEdit={canEdit} onDelete={remove} />
     </div>
   );
 }
 
-function Gallery({ photos, isDriver, onDelete }) {
+function Gallery({ photos, canEdit, onDelete }) {
+  const openLightbox = useContext(LightboxContext);
+
+  // One flat run in display order, so the lightbox arrows carry on across day
+  // boundaries instead of dead-ending at the last photo of each group.
+  const { groups, ordered } = useMemo(() => {
+    const byDay = new Map();
+    for (const p of photos) {
+      if (!byDay.has(p.dayNum)) byDay.set(p.dayNum, []);
+      byDay.get(p.dayNum).push(p);
+    }
+    const days = [...byDay.keys()].sort((a, b) => a - b);
+    const g = days.map(day => ({
+      day,
+      items: [...byDay.get(day)].sort((a, b) => a.takenAt - b.takenAt),
+    }));
+    return { groups: g, ordered: g.flatMap(x => x.items) };
+  }, [photos]);
+
   if (!photos.length) {
     return (
       <p className="text-sm italic" style={{ color: "var(--slate)" }}>
@@ -837,27 +1263,27 @@ function Gallery({ photos, isDriver, onDelete }) {
       </p>
     );
   }
-  const byDay = photos.reduce((acc, p) => {
-    (acc[p.dayNum] = acc[p.dayNum] || []).push(p);
-    return acc;
-  }, {});
-  const dayNums = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+
+  let cursor = 0;
   return (
     <>
-      {dayNums.map(d => {
-        const dayMeta = DAYS.find(x => x.num === d);
+      {groups.map(({ day, items }) => {
+        const dayMeta = DAYS.find(x => x.num === day);
         return (
-          <div key={d} className="mb-7">
+          <div key={day} className="mb-7">
             <h3 className="font-serif text-lg mb-3 pb-1.5 border-b" style={{ color: "var(--ink)", borderColor: "var(--line)" }}>
-              Day {d}{dayMeta ? ` · ${dayMeta.title}` : ''}
+              Day {day}{dayMeta ? ` · ${dayMeta.title}` : ''}
             </h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {byDay[d].sort((a, b) => a.takenAt - b.takenAt).map(p => (
-                <div key={p.id}>
-                  <PhotoThumb photo={p} isDriver={isDriver} onDelete={onDelete} size="w-full aspect-square" />
-                  {p.caption && <p className="text-[10px] mt-1 leading-tight" style={{ color: "var(--slate)" }}>{p.caption}</p>}
-                </div>
-              ))}
+              {items.map(p => {
+                const at = cursor++;
+                return (
+                  <div key={p.id}>
+                    <PhotoThumb photo={p} canEdit={canEdit} onDelete={onDelete} onOpen={() => openLightbox(ordered, at)} size="w-full aspect-square" />
+                    {p.caption && <p className="text-[10px] mt-1 leading-tight" style={{ color: "var(--slate)" }}>{p.caption}</p>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
@@ -868,16 +1294,23 @@ function Gallery({ photos, isDriver, onDelete }) {
 
 export default function App() {
   const [openDay, setOpenDay] = useState(1);
-  const [isDriver] = useState(isDriverMode);
   const { photos, upload, uploading, remove } = usePhotos();
-  const { hasPassword, setPassword } = useAuth();
-  const [tab, setTab] = useState('route');
+  const { checkin, checkIn, clearCheckin, busy: checkinBusy } = useCheckin();
+  // The password is the only gate: everyone reads, password-holders contribute.
+  const { hasPassword: canEdit, setPassword } = useAuth();
+  const [tab, setTab] = useTabRoute();
+  const [lightbox, setLightbox] = useState(null);
+
+  const openLightbox = useCallback((list, index) => setLightbox({ list, index }), []);
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+  const moveLightbox = useCallback(index => setLightbox(lb => (lb ? { ...lb, index } : lb)), []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [tab]);
 
   return (
+    <LightboxContext.Provider value={openLightbox}>
     <div className="min-h-screen" style={{
       "--cream": "#f5efe0",
       "--stone": "#e8e0cc",
@@ -929,11 +1362,15 @@ export default function App() {
                 <h2 className="font-serif text-2xl md:text-3xl" style={{ color: "var(--ink)" }}>The route</h2>
                 <span className="text-xs uppercase tracking-widest" style={{ color: "var(--slate)" }}>Numbered by night</span>
               </div>
-              <RouteMap />
+              <RouteMap checkin={checkin} />
               <div className="mt-3 flex items-center justify-center gap-4 text-xs flex-wrap" style={{ color: "var(--slate)" }}>
                 <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "var(--ink)" }} />Overnight</span>
                 <span className="inline-flex items-center gap-1.5"><span className="w-6 h-[2px]" style={{ background: "var(--rust)", borderTop: "1px dashed" }} />Drive</span>
+                {checkin && withinMap(checkin) && (
+                  <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "var(--rust)" }} />Last check-in</span>
+                )}
               </div>
+              <CheckInPanel checkin={checkin} checkIn={checkIn} clearCheckin={clearCheckin} busy={checkinBusy} canEdit={canEdit} />
               <div className="mt-4 text-center">
                 <a href="https://www.google.com/maps/dir/?api=1&origin=Follifoot+HG3&destination=Follifoot+HG3&waypoints=Erw+Glas+Maenan+LL26+0YP%7CSnowdon+Base+Camp+Rhyd-Ddu+LL54+7YS%7CBennar+Beach+Dyffryn+Ardudwy+LL44+2RX%7CPengarreg+Caravan+Park+Llanrhystud+SY23+5DJ%7CTy+Gwyn+Caravan+and+Camping+Park+SA43+1QH%7CPorthclais+Farm+Campsite+SA62+6RR%7CPencelli+Castle+Caravan+%26+Camping+Park+LD3+7LX&travelmode=driving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: "var(--accent)" }}>
                   <MapPin size={14} /> View full route in Google Maps
@@ -956,7 +1393,7 @@ export default function App() {
                     open={openDay === 'all' || openDay === day.num}
                     onToggle={() => setOpenDay(openDay === day.num ? null : day.num)}
                     photos={photos.filter(p => p.dayNum === day.num)}
-                    isDriver={isDriver}
+                    canEdit={canEdit}
                     upload={upload}
                     uploading={uploading}
                     remove={remove}
@@ -971,10 +1408,22 @@ export default function App() {
 
         {tab === 'todo' && <PackingList />}
 
-        {tab === 'photos' && <PhotoTab photos={photos} upload={upload} uploading={uploading} isDriver={isDriver} remove={remove} hasPassword={hasPassword} setPassword={setPassword} />}
+        {tab === 'photos' && <PhotoTab photos={photos} upload={upload} uploading={uploading} canEdit={canEdit} remove={remove} hasPassword={canEdit} setPassword={setPassword} />}
       </div>
 
-      <BottomNav active={tab} onChange={setTab} isDriver={isDriver} />
+      <BottomNav active={tab} onChange={setTab} />
+
+      {lightbox && (
+        <Lightbox
+          photos={lightbox.list}
+          index={lightbox.index}
+          onIndex={moveLightbox}
+          onClose={closeLightbox}
+          canEdit={canEdit}
+          onDelete={remove}
+        />
+      )}
     </div>
+    </LightboxContext.Provider>
   );
 }

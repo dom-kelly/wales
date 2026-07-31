@@ -1,0 +1,4 @@
+# SPA fallback: /photos, /bookings etc. are client-side routes with no file on
+# disk, so serve the app shell and let it read the path. Pages Functions match
+# before this, so /api/* still reaches functions/api/.
+/*    /index.html   200
