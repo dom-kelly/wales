@@ -71,10 +71,10 @@ Note there's no hot reload in this mode — rerun `npm run build` after a change
 The local password comes from `.dev.vars` in the project root, which is gitignored:
 
 ```
-ADMIN_PASSWORD=wales2026
+ADMIN_PASSWORD=<pick anything for local dev>
 ```
 
-Use a different value in production — see step 5 below.
+This repo is public, so never paste the real value here. The production password is a separate secret set in the Cloudflare dashboard — see step 5 below.
 
 ### Testing on a phone without deploying
 
@@ -132,10 +132,11 @@ npx wrangler r2 bucket create wales-photos
 
 Then add the password as an encrypted secret:
 
-- Pages → your project → **Settings** → **Environment variables** → **Add variable**
+- Pages → your project → **Settings** → **Variables and Secrets** → **Add**
 - Name: `ADMIN_PASSWORD`, value: whatever you're sharing with the family, type: **Secret**
+- Then **redeploy**. Pages binds environment variables when a deployment is created, so an existing deployment won't pick up a newly added secret until you retry it or push a commit.
 
-Cloudflare can't show a secret again once saved, so if you forget it, overwrite it with a new value and redeploy. Without this set, `/api/photos` returns 503 on upload rather than allowing unauthenticated writes.
+Cloudflare can't show a secret again once saved, so if you forget it, overwrite it with a new value and redeploy. Without this set, uploads and check-in return 503 rather than allowing unauthenticated writes — it fails closed, so the site is still safe to leave up while you sort it out.
 
 ### 6. Custom domain
 - Pages → your project → **Custom domains** → **Set up a custom domain**
